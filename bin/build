@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 function build() {
-  local args=()
-  local oss=()
-  local archs=()
+  local -a args=()
+  local -a oss=()
+  local -a archs=()
   local build_dir=${BUILD_DIR:-.}
 
   while [[ -n "${1:-}" ]]; do
