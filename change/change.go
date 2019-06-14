@@ -169,25 +169,27 @@ func (r *Runner) ChangeStacksInSpace(i query.Inquisitor, spaceGuid string, apps 
 func (r *Runner) ChangeStackInApp(ch ChangerWrapper, app cfclient.App) error {
 	stack := r.ToStack
 
-	r.Logger.Debugf("Changing %s's stack to '%s'", app.Name, stack)
-	r.Logger.Infof("%s", app.Name)
-
 	var err error
+	r.Logger.Debugf("Changing %s's stack to '%s'", app.Name, stack)
+	// r.Logger.Infof("%s", app.Name)
+	space, err := ch.GetSpace()
+	if err != nil {
+		return err
+	}
+	org, err := ch.GetOrg()
+	if err != nil {
+		return err
+	}
+
 	if r.DryRun {
-		r.Logger.Debug("Dry Run enabled")
-		space, err := ch.GetSpace()
-		if err != nil {
-			return err
-		}
-		org, err := ch.GetOrg()
-		if err != nil {
-			return err
-		}
 		r.Logger.Infof("cf target -o %s -s %s\ncf change-stack %s %s", org.Name, space.Name, app.Name, stack)
 	} else {
+		r.Logger.Infof("Changing stack in org: %s, space: %s, app: %s, to %s", org.Name, space.Name, app.Name, stack)
 		str, err := ch.ChangeStack(app.Name, stack)
 		if err == nil {
-			r.Logger.Debug(str)
+			r.Logger.Info(str)
+		} else {
+			r.Logger.Infof("%v", err)
 		}
 	}
 
