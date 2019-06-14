@@ -105,7 +105,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:0fd7f0b91df0560de5e0804fbf0df8b63914ef5ac0e86fed3e92270c08262893"
+  digest = "1:77d64770a6398fef69fcaa700b8850437271dcd2ddcd13588d6e32754f6ebb2e"
   name = "github.com/mike-carey/cfquery"
   packages = [
     "cf",
@@ -115,7 +115,7 @@
     "util",
   ]
   pruneopts = "UT"
-  revision = "5669fb837660fcc7b6fdfb921e98b012ac4a962b"
+  revision = "5e2c4aac9bd0dfb33e0431e254ba5952b37c737f"
 
 [[projects]]
   digest = "1:e9c3bb68a6c9470302b8046d4647e0612a2ea6037b9c6a47de60c0a90db504f8"

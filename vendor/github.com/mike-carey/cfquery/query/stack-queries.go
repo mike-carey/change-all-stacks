@@ -9,7 +9,7 @@ import (
 
 func (s *StackService) GetStackByName(name string) (cfclient.Stack, error) {
 	v := url.Values{}
-	v["name"] = []string{name}
+	v["q"] = []string{fmt.Sprintf("name:%s", name)}
 
 	stacks, err := s.Client.ListStacksByQuery(v)
 	if err != nil {
