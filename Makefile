@@ -14,5 +14,5 @@ test:
 build:
 	@./bin/build
 
-build-all:
+all:
 	@./bin/build --all
