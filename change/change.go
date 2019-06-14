@@ -142,11 +142,13 @@ func (r *Runner) ChangeStacksInSpace(i query.Inquisitor, spaceGuid string, apps 
 		return err
 	}
 
+	wrapper := NewChangerWrapper(ch, i, spaceGuid)
+
 	errCh := make(chan error)
 
 	for _, app := range apps {
 		go func(ch Changer, app cfclient.App) {
-			errCh <- r.ChangeStackInApp(ch, app)
+			errCh <- r.ChangeStackInApp(wrapper, app)
 		}(ch, app)
 	}
 
@@ -164,7 +166,7 @@ func (r *Runner) ChangeStacksInSpace(i query.Inquisitor, spaceGuid string, apps 
 	return nil
 }
 
-func (r *Runner) ChangeStackInApp(ch Changer, app cfclient.App) error {
+func (r *Runner) ChangeStackInApp(ch ChangerWrapper, app cfclient.App) error {
 	stack := r.ToStack
 
 	r.Logger.Debugf("Changing %s's stack to '%s'", app.Name, stack)
@@ -173,6 +175,15 @@ func (r *Runner) ChangeStackInApp(ch Changer, app cfclient.App) error {
 	var err error
 	if r.DryRun {
 		r.Logger.Debug("Dry Run enabled")
+		space, err := ch.GetSpace()
+		if err != nil {
+			return err
+		}
+		org, err := ch.GetOrg()
+		if err != nil {
+			return err
+		}
+		r.Logger.Infof("cf target -o %s -s %s\ncf change-stack %s %s", org.Name, space.Name, app.Name, stack)
 	} else {
 		str, err := ch.ChangeStack(app.Name, stack)
 		if err == nil {

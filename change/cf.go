@@ -22,6 +22,43 @@ type Changer interface {
 	ChangeStack(app string, stack string) (string, error)
 }
 
+type ChangerWrapper interface {
+	ChangeStack(app string, stack string) (string, error)
+	GetOrg() (*cfclient.Org, error)
+	GetSpace() (*cfclient.Space, error)
+}
+
+type changerWrapper struct {
+	Changer Changer
+	Inquisitor query.Inquisitor
+	SpaceGuid string
+}
+
+func NewChangerWrapper(ch Changer, inquisitor query.Inquisitor, spaceGuid string) ChangerWrapper {
+	return &changerWrapper {
+		Changer: ch,
+		Inquisitor: inquisitor,
+		SpaceGuid: spaceGuid,
+	}
+}
+
+func (c *changerWrapper) GetOrg() (*cfclient.Org, error) {
+	s, e := c.GetSpace()
+	if e != nil {
+		return &cfclient.Org{}, e
+	}
+
+	return c.Inquisitor.GetOrgByGuid(s.OrganizationGuid)
+}
+
+func (c *changerWrapper) GetSpace() (*cfclient.Space, error) {
+	return c.Inquisitor.GetSpaceByGuid(c.SpaceGuid)
+}
+
+func (c *changerWrapper) ChangeStack(app string, stack string) (string, error) {
+	return c.Changer.ChangeStack(app, stack)
+}
+
 func GetCliConnection() plugin.CliConnection {
 	cliConnection := plugin.NewCliConnection(ChangeStackCmd)
 
