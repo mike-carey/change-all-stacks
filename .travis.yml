@@ -5,6 +5,9 @@ env:
   global:
     CLI_NAME: change-all-stacks
 
+before_script:
+  - go get -u github.com/onsi/ginkgo
+
 script:
   - make test
 
