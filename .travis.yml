@@ -4,6 +4,7 @@ language: go
 env:
   global:
     CLI_NAME: change-all-stacks
+    PATH: $PATH:$GOPATH/bin
 
 before_script:
   - go get -u github.com/onsi/ginkgo
