@@ -1,0 +1,23 @@
+---
+language: go
+
+env:
+  global:
+    CLI_NAME: change-all-stacks
+
+script:
+  - make test
+
+before_deploy:
+  - make BUILD_DIR=. all
+
+deploy:
+  provider: releases
+  api_key: $GITHUB_TOKEN
+  file:
+    - ${CLI_NAME}-linux
+    - ${CLI_NAME}-darwin
+    - ${CLI_NAME}-windows.exe
+  skip_cleanup: true
+  on:
+    tags: true

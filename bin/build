@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+
+function build() {
+  local oss=()
+  local archs=()
+  local build_dir=${BUILD_DIR:-.}
+
+  while [[ -n "${1:-}" ]]; do
+    case "$1" in
+      --linux | -l )
+        os+=(linux)
+        ;;
+      --darwin | --osx | -d )
+        os+=(darwin)
+        ;;
+      --windows | -w )
+        os+=(windows)
+        ;;
+      --all | -a )
+        os+=(linux darwin windows)
+        ;;
+      --os | -o )
+        os+=("$2")
+        shift
+        ;;
+      --build-dir | -b )
+        build_dir="$2"
+        shift
+        ;;
+      -- )
+        args+=("$@")
+        break
+        ;;
+      * )
+        args+=("$1")
+        ;;
+    esac
+    shift
+  done
+
+  set -- ${args[@]}
+
+  local main="${1:-${MAIN_FILE:-}}"
+  local script_name="${2:-}"
+
+  if [[ -z "$main" ]]; then
+    _main=($(git ls-files '**main.go' | grep -v vendor/))
+    if [[ ${#_main[@]} -eq 1 ]]; then
+      main=$_main
+    else
+      echo "Could not determine main file."
+      echo "Please specify main.go as the first parameter to the script"
+      echo "  Example:  $0 main.go $script_name"
+    fi
+  fi
+
+  if [[ -z "$script_name" ]]; then
+    script_name=$(basename $PWD)
+  fi
+
+  if [[ -z "${oss[@]}" ]]; then
+    _build "$main" "$build_dir/$script_name"
+  fi
+
+  for os in ${oss[@]}; do
+    if [[ -z "${archs[@]}" ]]; then
+      _build_for_os "$os" "$main" "$build_dir/$script_name"
+    else
+      for arch in ${archs[@]}; do
+        _build_for_os_and_arch "$os" "$arch" "$main" "$build_dir/$script_name"
+      done
+    fi
+  done
+}
+
+function _build() {
+  local main=$1
+  local file=$2
+
+  # if [[ "$os" == "windows" ]]; then
+  #   file=$file.exe
+  # fi
+
+  echo "Building $file from $main"
+  go build -o $file $main
+}
+
+function _build_for_os() {
+  local os=$1
+  local main=$2
+  local file=${3}-${arch}-${os}
+
+  if [[ "$os" == "windows" ]]; then
+    file=$file.exe
+  fi
+
+  echo "Building $file from $main"
+  GOOS=$os go build -o $file $main
+}
+
+function _build_for_os_and_arch() {
+  local os=$1
+  local arch=$2
+  local main=$3
+  local file=${4}-${arch}-${os}
+
+  if [[ "$os" == "windows" ]]; then
+    file=$file.exe
+  fi
+
+  echo "Building $file from $main"
+  GOOS=$os GOARCH=$arch go build -o $file $main
+}
+
+if [[ ${BASH_SOURCE[0]} != $0 ]]; then
+  echo "Cannot source this file!" >&2
+  exit 255
+else
+  set -euo pipefail
+
+  build "${@:-}"
+  exit $?
+fi

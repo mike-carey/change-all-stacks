@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+function test() {
+  local directory="${1:-.}"
+
+  local test_suite_files=*/*_suite_test.go
+
+  local test_suites=()
+  for test_suite_file in $test_suite_files; do
+    test_suites+=("$(dirname $test_suite_file)")
+  done
+
+  ginkgo ${test_suites[@]}
+  return $?
+}
+
+if [[ ${BASH_SOURCE[0]} != $0 ]]; then
+  echo "Cannot source this file!" >&2
+  exit 255
+else
+  set -eo pipefail
+
+  test "${@:-}"
+  exit $?
+fi

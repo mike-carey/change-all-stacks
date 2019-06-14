@@ -1,0 +1,7 @@
+# vi:syntax=sh
+
+export BUILD_DIR=build
+
+export CHANGE_ALL_STACKS_CONFIG="cf.json"
+export CHANGE_ALL_STACKS_DRY_RUN=true
+export CHANGE_ALL_STACKS_VERBOSE=true
