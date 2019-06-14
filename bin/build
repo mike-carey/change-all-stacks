@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 function build() {
+  local args=()
   local oss=()
   local archs=()
   local build_dir=${BUILD_DIR:-.}
@@ -8,19 +9,19 @@ function build() {
   while [[ -n "${1:-}" ]]; do
     case "$1" in
       --linux | -l )
-        os+=(linux)
+        oss+=(linux)
         ;;
       --darwin | --osx | -d )
-        os+=(darwin)
+        oss+=(darwin)
         ;;
       --windows | -w )
-        os+=(windows)
+        oss+=(windows)
         ;;
       --all | -a )
-        os+=(linux darwin windows)
+        oss+=(linux darwin windows)
         ;;
       --os | -o )
-        os+=("$2")
+        oss+=("$2")
         shift
         ;;
       --build-dir | -b )
@@ -88,7 +89,7 @@ function _build() {
 function _build_for_os() {
   local os=$1
   local main=$2
-  local file=${3}-${arch}-${os}
+  local file=${3}-${os}
 
   if [[ "$os" == "windows" ]]; then
     file=$file.exe
