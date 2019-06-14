@@ -16,11 +16,13 @@ script:
   - make test
 
 before_deploy:
+  - ./bin/version ${TRAVIS_TAG/v/} change/version.go
   - make BUILD_DIR=. all
 
 deploy:
   provider: releases
   api_key: $GITHUB_TOKEN
+  name: Version ${TRAVIS_TAG/v/}
   file:
     - ${CLI_NAME}-linux
     - ${CLI_NAME}-darwin

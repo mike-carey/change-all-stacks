@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+function version() {
+  local version=$1
+  local version_file=${2:-version.go}
+
+  echo "Setting version to $version"
+  sed -i.bak 's/\(.*Version = "\).*\(".*\)/\1'$version'\2/g' $version_file
+  rm $version_file.bak
+}
+
+if [[ ${BASH_SOURCE[0]} != $0 ]]; then
+  echo "Cannot source this file!" >&2
+  exit 255
+else
+  set -euo pipefail
+
+  version "${@:-}"
+  exit $?
+fi
