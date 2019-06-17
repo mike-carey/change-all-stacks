@@ -1,30 +1,15 @@
-package change_all_stacks
+package change
 
 import (
+	"fmt"
 	cfclient "github.com/cloudfoundry-community/go-cfclient"
 
 	"github.com/mike-carey/cfquery/config"
 	"github.com/mike-carey/cfquery/query"
 	"github.com/mike-carey/cfquery/util"
+
+	"code.cloudfoundry.org/cli/plugin"
 )
-
-const (
-	Stack = "cflinuxfs3"
-)
-
-type Options struct {
-	Config  string `short:"c" long:"config" description:"The configuration file to load" default:"cf.json"`
-	DryRun  bool   `short:"d" long:"dry-run" description:"Does not actually do the stack change, but instead prints what it would do"`
-	Verbose bool   `short:"v" long:"verbose" description:"Prints more output"`
-	Version bool   `long:"version" description:"Prints the version of the cli"`
-
-	FromStack string
-	ToStack string
-}
-
-func Go(opts *Options) error {
-	return NewRunner(opts.Config, opts.Verbose, opts.DryRun, opts.FromStack, opts.ToStack).Run()
-}
 
 type Runner struct {
 	Config string
@@ -32,6 +17,7 @@ type Runner struct {
 	DryRun bool
 	FromStack string
 	ToStack string
+	CliConnection plugin.CliConnection
 }
 
 func NewRunner(config string, verbose bool, dryrun bool, fromStack string, toStack string) *Runner {
@@ -43,6 +29,7 @@ func NewRunner(config string, verbose bool, dryrun bool, fromStack string, toSta
 		DryRun: dryrun,
 		FromStack: fromStack,
 		ToStack: toStack,
+		CliConnection: GetCliConnection(),
 	}
 }
 
@@ -88,32 +75,37 @@ func (r *Runner) ChangeAllStacks(foundations config.Foundations) error {
 }
 
 func (r *Runner) ChangeAllStacksInFoundation(foundationName string, conf *cfclient.Config) error {
-	r.Logger.Debugf("Changing stacks in: %s", foundationName)
+	r.Logger.Debugf("Checking stacks in: %s", foundationName)
 
 	cli, err := cfclient.NewClient(conf)
 	if err != nil {
 		return err
 	}
 
+	r.Logger.Debugf("Creating inquisitor for: %s", foundationName)
 	i := query.NewInquisitor(cli)
 
 	// Grab every app
+	r.Logger.Debugf("Loading all apps in %s", foundationName)
 	apps, err := i.GetAllApps()
 	if err != nil {
 		return err
 	}
 
+	r.Logger.Debugf("Filtering %i apps by stackname '%s' in %s", len(apps), r.FromStack, foundationName)
 	apps, err = apps.FilterByStackName(i, r.FromStack)
 	if err != nil {
 		return err
 	}
 
 	// Group by space
+	r.Logger.Debugf("Grouping %i apps by space in %s", len(apps), foundationName)
 	mapps, err := apps.GroupBySpace(i)
 	if err != nil {
 		return err
 	}
 
+	r.Logger.Debugf("Changing stacks from '%s' to '%s' for %i apps in %s", r.FromStack, r.ToStack, len(mapps), foundationName)
 	errCh := make(chan error)
 	for spaceGuid, apps := range mapps {
 		go func(i query.Inquisitor, spaceGuid string, apps query.Apps) {
@@ -136,25 +128,43 @@ func (r *Runner) ChangeAllStacksInFoundation(foundationName string, conf *cfclie
 }
 
 func (r *Runner) ChangeStacksInSpace(i query.Inquisitor, spaceGuid string, apps query.Apps) error {
-	// Every space needs a new cliconnection
-	ch, err := GetChanger(i, spaceGuid)
+	r.Logger.Debugf("Getting space from guid")
+	space, err := i.GetSpaceByGuid(spaceGuid)
 	if err != nil {
 		return err
 	}
 
-	wrapper := NewChangerWrapper(ch, i, spaceGuid)
+	r.Logger.Debugf("Getting org from guid")
+	org, err := i.GetOrgByGuid(space.OrganizationGuid)
+	if err != nil {
+		return err
+	}
+
+	r.Logger.Debugf("Building changer")
+	ch, err := NewChanger(r.CliConnection, space)
+	if err != nil {
+		return err
+	}
+
+	r.Logger.Debugf("Building Handler")
+	h := NewHandlerWithStdout(ch)
 
 	errCh := make(chan error)
-
 	for _, app := range apps {
-		go func(ch Changer, app cfclient.App) {
-			errCh <- r.ChangeStackInApp(wrapper, app)
-		}(ch, app)
+		go func(org *cfclient.Org, space *cfclient.Space, app *cfclient.App, stack string) {
+			var err error
+			if r.DryRun {
+				err = h.HandleDryRun(org.Name, space.Name, app.Name, r.ToStack)
+			} else {
+				err = fmt.Errorf("Did not use dry run")
+			}
+			errCh <- err
+		}(org, space, &app, r.ToStack)
 	}
 
 	errPool := make([]error, 0)
 	for _, _ = range apps {
-		if err = <-errCh; err != nil {
+		if err := <-errCh; err != nil {
 			errPool = append(errPool, err)
 		}
 	}
@@ -164,34 +174,4 @@ func (r *Runner) ChangeStacksInSpace(i query.Inquisitor, spaceGuid string, apps 
 	}
 
 	return nil
-}
-
-func (r *Runner) ChangeStackInApp(ch ChangerWrapper, app cfclient.App) error {
-	stack := r.ToStack
-
-	var err error
-	r.Logger.Debugf("Changing %s's stack to '%s'", app.Name, stack)
-	// r.Logger.Infof("%s", app.Name)
-	space, err := ch.GetSpace()
-	if err != nil {
-		return err
-	}
-	org, err := ch.GetOrg()
-	if err != nil {
-		return err
-	}
-
-	if r.DryRun {
-		r.Logger.Infof("cf target -o %s -s %s\ncf change-stack %s %s", org.Name, space.Name, app.Name, stack)
-	} else {
-		r.Logger.Infof("Changing stack in org: %s, space: %s, app: %s, to %s", org.Name, space.Name, app.Name, stack)
-		str, err := ch.ChangeStack(app.Name, stack)
-		if err == nil {
-			r.Logger.Info(str)
-		} else {
-			r.Logger.Infof("%v", err)
-		}
-	}
-
-	return err
 }

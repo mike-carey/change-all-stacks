@@ -48,7 +48,18 @@ func options() (*Options, error) {
 	return opts, nil
 }
 
+type VersionOption struct {
+	Version bool   `long:"version" description:"Prints the version of the cli"`
+}
+
 func main() {
+	vOpt := VersionOption{}
+	args, err := flags.NewParser(&vOpt, flags.PassDoubleDash).Parse()
+	if vOpt.Version {
+		fmt.Println(Version)
+		return
+	}
+
 	opts, err := options()
 	if err != nil {
 		onError(err)
@@ -57,28 +68,10 @@ func main() {
 
 	parser := flags.NewParser(opts, flags.Default)
 
-	args, err := parser.Parse()
-	if flags.WroteHelp(err) {
+	_, err = parser.ParseArgs(args)
+	if err != nil || flags.WroteHelp(err) {
 		return
 	}
-	if err != nil {
-		onError(err)
-		return
-	}
-
-	if opts.Version {
-		fmt.Println(Version)
-		return
-	}
-
-	if len(args) < 2 {
-		parser.WriteHelp(os.Stderr)
-		os.Exit(1)
-		return
-	}
-
-	opts.FromStack = args[0]
-	opts.ToStack = args[1]
 
 	err = Go(opts)
 	if err != nil {

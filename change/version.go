@@ -1,5 +1,5 @@
-package change_all_stacks
+package change
 
 const (
-	Version = "0.0.0"
+	Version = "v1.0.3"
 )

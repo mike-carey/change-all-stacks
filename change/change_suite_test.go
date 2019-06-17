@@ -1,4 +1,4 @@
-package change_all_stacks_test
+package change_test
 
 import (
 	"testing"

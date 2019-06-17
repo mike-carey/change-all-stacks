@@ -1,4 +1,4 @@
-package change_all_stacks
+package change
 
 import (
 	"io"
@@ -9,6 +9,12 @@ import (
 // Simple logger
 type Logger struct {
 	Verbose bool
+}
+
+func NewLogger(verbose bool) *Logger {
+	return &Logger{
+		Verbose: verbose,
+	}
 }
 
 func (l *Logger) log(w io.Writer, msg string) {
