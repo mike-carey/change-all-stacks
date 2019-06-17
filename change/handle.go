@@ -41,7 +41,7 @@ func (h *handler) printf(msg string, args ...interface{}) {
 }
 
 func (h *handler) Handle(org string, space string, app string, stack string) error {
-	h.printf("Changing stack in org: %s, space: %s, app: %s, to %s", org, space, app, stack)
+	h.printf("Changing stack in org: %s, space: %s, app: %s, to %s\n", org, space, app, stack)
 	str, err := h.Changer.ChangeStack(app, stack)
 	if err == nil {
 		h.printf(str)
@@ -53,7 +53,7 @@ func (h *handler) Handle(org string, space string, app string, stack string) err
 }
 
 func (h *handler) HandleDryRun(org string, space string, app string, stack string) error {
-	h.printf("cf target -o %s -s %s\ncf change-stack %s %s", org, space, app, stack)
+	h.printf("cf target -o %s -s %s\ncf change-stack %s %s\n", org, space, app, stack)
 
 	return nil
 }
