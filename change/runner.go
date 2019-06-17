@@ -16,7 +16,6 @@ type Runner struct {
 	DryRun bool
 	FromStack string
 	ToStack string
-	CliConnection plugin.CliConnection
 }
 
 func NewRunner(config string, verbose bool, dryrun bool, fromStack string, toStack string) *Runner {
@@ -28,7 +27,6 @@ func NewRunner(config string, verbose bool, dryrun bool, fromStack string, toSta
 		DryRun: dryrun,
 		FromStack: fromStack,
 		ToStack: toStack,
-		CliConnection: GetCliConnection(),
 	}
 }
 
@@ -139,38 +137,40 @@ func (r *Runner) ChangeStacksInSpace(i query.Inquisitor, spaceGuid string, apps 
 		return err
 	}
 
-	r.Logger.Debugf("Building changer")
-	ch, err := NewChanger(r.CliConnection, space)
-	if err != nil {
-		return err
-	}
-
-	r.Logger.Debugf("Building Handler")
-	h := NewHandlerWithStdout(ch)
-
-	errCh := make(chan error)
-	for _, app := range apps {
-		go func(org *cfclient.Org, space *cfclient.Space, app *cfclient.App, stack string) {
-			var err error
-			if r.DryRun {
-				err = h.HandleDryRun(org.Name, space.Name, app.Name, r.ToStack)
-			} else {
-				err = h.Handle(org.Name, space.Name, app.Name, r.ToStack)
-			}
-			errCh <- err
-		}(org, space, &app, r.ToStack)
-	}
-
-	errPool := make([]error, 0)
-	for _, _ = range apps {
-		if err := <-errCh; err != nil {
-			errPool = append(errPool, err)
+	return WithCliConnection(func(cliConnection plugin.CliConnection) error {
+		r.Logger.Debugf("Building changer")
+		ch, err := NewChanger(cliConnection, space)
+		if err != nil {
+			return err
 		}
-	}
 
-	if len(errPool) > 0 {
-		return util.StackErrors(errPool)
-	}
+		r.Logger.Debugf("Building Handler")
+		h := NewHandlerWithStdout(ch)
 
-	return nil
+		errCh := make(chan error)
+		for _, app := range apps {
+			go func(org *cfclient.Org, space *cfclient.Space, app *cfclient.App, stack string) {
+				var err error
+				if r.DryRun {
+					err = h.HandleDryRun(org.Name, space.Name, app.Name, r.ToStack)
+				} else {
+					err = h.Handle(org.Name, space.Name, app.Name, r.ToStack)
+				}
+				errCh <- err
+			}(org, space, &app, r.ToStack)
+		}
+
+		errPool := make([]error, 0)
+		for _, _ = range apps {
+			if err := <-errCh; err != nil {
+				errPool = append(errPool, err)
+			}
+		}
+
+		if len(errPool) > 0 {
+			return util.StackErrors(errPool)
+		}
+
+		return nil
+	})
 }

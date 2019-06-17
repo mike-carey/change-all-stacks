@@ -11,10 +11,10 @@ import (
 	// "code.cloudfoundry.org/cli/cf/terminal"
 	"code.cloudfoundry.org/cli/cf/trace"
 
-	. "code.cloudfoundry.org/cli/cf/i18n"
-
 	netrpc "net/rpc"
 )
+
+var Writer = os.Stdout
 
 //go:generate counterfeiter -o fakes/fake_cli_connection.go code.cloudfoundry.org/cli/plugin.CliConnection
 type ChangeAllStacksPlugin struct {
@@ -63,30 +63,35 @@ func (p *ChangeAllStacksPlugin) Run(cliConnection plugin.CliConnection, _ []stri
 }
 
 func (p *ChangeAllStacksPlugin) GetConnection() plugin.CliConnection {
-	var Writer = os.Stdout
 
+	return p.connection
+}
+
+func (p *ChangeAllStacksPlugin) getRpcService() (*rpc.CliRpcService, error) {
 	traceLogger := trace.NewLogger(os.Stdout, true)
 	deps := commandregistry.NewDependency(Writer, traceLogger, "6000")
 	defer deps.Config.Close()
 
 	server := netrpc.NewServer()
-	rpcService, err := rpc.NewRpcService(deps.TeePrinter, deps.TeePrinter, deps.Config, deps.RepoLocator, rpc.NewCommandRunner(), deps.Logger, Writer, server)
-	if err != nil {
-		deps.UI.Say(T("Error initializing RPC service: ") + err.Error())
-		os.Exit(1)
-	}
-
-	rpcService.Start()
-	defer rpcService.Stop()
-
-	os.Args = []string{os.Args[0], rpcService.Port()}
-
-	plugin.Start(p)
-
-	return p.connection
+	return rpc.NewRpcService(deps.TeePrinter, deps.TeePrinter, deps.Config, deps.RepoLocator, rpc.NewCommandRunner(), deps.Logger, Writer, server)
 }
 
-func GetCliConnection() plugin.CliConnection {
+func (p *ChangeAllStacksPlugin) WithConnection(do func(cliConnection plugin.CliConnection) error) error {
+	rpcService, err := p.getRpcService()
+	if err != nil {
+		return err
+	}
+
+	defer rpcService.Stop()
+	rpcService.Start()
+
+	os.Args = []string{os.Args[0], rpcService.Port()}
+	plugin.Start(p)
+
+	return do(p.connection)
+}
+
+func WithCliConnection(do func(cliConnection plugin.CliConnection) error) error {
 	p := &ChangeAllStacksPlugin{}
-	return p.GetConnection()
+	return p.WithConnection(do)
 }
