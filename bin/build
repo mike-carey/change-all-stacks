@@ -39,9 +39,7 @@ function build() {
     shift
   done
 
-  if [[ ${#args} -gt 0 ]]; then
-    set -- ${args[@]}
-  fi
+  set -- ${args[@]}
 
   local main="${1:-${MAIN_FILE:-}}"
   local script_name="${2:-}"
@@ -61,12 +59,12 @@ function build() {
     script_name=$(basename $PWD)
   fi
 
-  if [[ ${#oss} -lt 1 ]]; then
+  if [[ -z "${oss[@]}" ]]; then
     _build "$main" "$build_dir/$script_name"
   fi
 
   for os in ${oss[@]}; do
-    if [[ ${#archs} -lt 1 ]]; then
+    if [[ -z "${archs[@]}" ]]; then
       _build_for_os "$os" "$main" "$build_dir/$script_name"
     else
       for arch in ${archs[@]}; do
