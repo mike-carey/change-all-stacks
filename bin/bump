@@ -27,8 +27,8 @@ function bump() {
 
   git push origin master
 
-  echo "Tagging release $version"
-  git tag -a "v$version" -m "Version $version"
+  echo "Tagging release $next_version"
+  git tag -a "v$next_version" -m "Version $next_version"
   git push origin --tags
 }
 
