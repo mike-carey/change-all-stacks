@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+function bump() {
+  local version_file=${1:-version.go}
+  local version=$(sed -n 's/.*Version = "\(.*\)".*/\1/p' $version_file)
+
+  local next_version=$(./vendor/cicd-helpers/bin/version $version)
+
+  local current_branch=$(git branch | grep \* | cut -d ' ' -f2)
+
+  if [[ $current_branch != master ]]; then
+    echo "Current branch is not master.  Cowardly refusing to bump." >&2
+    return 1
+  fi
+  if git diff-index --quiet HEAD -- ; then
+    :
+  else
+    echo "There are uncommited changes.  Cowardly refusing to bump." >&2
+    return 2
+  fi
+
+  echo "Bumping version to $next_version"
+  ./bin/version $next_version $version_file
+
+  git add $version_file
+  git ci -m "Bump version to $next_version"
+
+  git push origin master
+
+  echo "Tagging release $version"
+  git tag -a "v$version" -m "Version $version"
+  git push origin --tags
+}
+
+if [[ ${BASH_SOURCE[0]} != $0 ]]; then
+  echo "Cannot source this file!" >&2
+  exit 255
+else
+  set -euo pipefail
+
+  bump "${@:-}"
+  exit $?
+fi

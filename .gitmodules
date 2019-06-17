@@ -1,0 +1,4 @@
+[submodule "vendor/cicd-helpers"]
+	path = vendor/cicd-helpers
+	url = https://github.com/mike-carey/cicd-helpers.git
+	branch = dist/v0.1
