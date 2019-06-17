@@ -36,7 +36,7 @@ if [[ ${BASH_SOURCE[0]} != $0 ]]; then
   echo "Cannot source this file!" >&2
   exit 255
 else
-  set -euo pipefail
+  set -eo pipefail
 
   bump "${@:-}"
   exit $?
