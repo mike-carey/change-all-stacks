@@ -1,7 +1,6 @@
 package change
 
 import (
-	"fmt"
 	cfclient "github.com/cloudfoundry-community/go-cfclient"
 
 	"github.com/mike-carey/cfquery/config"
@@ -156,7 +155,7 @@ func (r *Runner) ChangeStacksInSpace(i query.Inquisitor, spaceGuid string, apps 
 			if r.DryRun {
 				err = h.HandleDryRun(org.Name, space.Name, app.Name, r.ToStack)
 			} else {
-				err = fmt.Errorf("Did not use dry run")
+				err = h.Handle(org.Name, space.Name, app.Name, r.ToStack)
 			}
 			errCh <- err
 		}(org, space, &app, r.ToStack)
