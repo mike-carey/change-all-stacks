@@ -16,7 +16,6 @@ script:
   - make test
 
 before_deploy:
-  - ./bin/version ${TRAVIS_TAG/v/} change/version.go
   - make BUILD_DIR=. all
 
 deploy:
