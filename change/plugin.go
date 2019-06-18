@@ -1,6 +1,7 @@
 package change
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"strconv"
@@ -67,28 +68,32 @@ func (p *ChangeAllStacksPlugin) GetConnection() plugin.CliConnection {
 	return p.connection
 }
 
-func (p *ChangeAllStacksPlugin) getRpcService() (*rpc.CliRpcService, error) {
+func (p *ChangeAllStacksPlugin) withRpcService(do func(rpcService *rpc.CliRpcService) error) error {
 	traceLogger := trace.NewLogger(os.Stdout, true)
 	deps := commandregistry.NewDependency(Writer, traceLogger, "6000")
 	defer deps.Config.Close()
 
 	server := netrpc.NewServer()
-	return rpc.NewRpcService(deps.TeePrinter, deps.TeePrinter, deps.Config, deps.RepoLocator, rpc.NewCommandRunner(), deps.Logger, Writer, server)
-}
-
-func (p *ChangeAllStacksPlugin) WithConnection(do func(cliConnection plugin.CliConnection) error) error {
-	rpcService, err := p.getRpcService()
+	rpcService, err := rpc.NewRpcService(deps.TeePrinter, deps.TeePrinter, deps.Config, deps.RepoLocator, rpc.NewCommandRunner(), deps.Logger, Writer, server)
 	if err != nil {
 		return err
 	}
 
-	defer rpcService.Stop()
-	rpcService.Start()
+	return do(rpcService)
+}
 
-	os.Args = []string{os.Args[0], rpcService.Port()}
-	plugin.Start(p)
+func (p *ChangeAllStacksPlugin) WithConnection(do func(cliConnection plugin.CliConnection) error) error {
+	return p.withRpcService(func (rpcService *rpc.CliRpcService) error {
+		defer rpcService.Stop()
+		rpcService.Start()
 
-	return do(p.connection)
+		fmt.Printf("Started rpc service on port %q", rpcService.Port())
+
+		os.Args = []string{os.Args[0], rpcService.Port()}
+		plugin.Start(p)
+
+		return do(p.connection)
+	})
 }
 
 func WithCliConnection(do func(cliConnection plugin.CliConnection) error) error {
