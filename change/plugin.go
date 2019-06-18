@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"code.cloudfoundry.org/cli/cf/commandregistry"
+	"code.cloudfoundry.org/cli/cf/configuration/coreconfig"
 	"code.cloudfoundry.org/cli/plugin"
 	"code.cloudfoundry.org/cli/plugin/rpc"
 	// "code.cloudfoundry.org/cli/cf/terminal"
@@ -64,14 +65,18 @@ func (p *ChangeAllStacksPlugin) Run(cliConnection plugin.CliConnection, _ []stri
 }
 
 func (p *ChangeAllStacksPlugin) GetConnection() plugin.CliConnection {
-
 	return p.connection
+}
+
+func closeConfig(conf coreconfig.Repository) {
+	fmt.Println("Closing config")
+	conf.Close()
 }
 
 func (p *ChangeAllStacksPlugin) withRpcService(do func(rpcService *rpc.CliRpcService) error) error {
 	traceLogger := trace.NewLogger(os.Stdout, true)
 	deps := commandregistry.NewDependency(Writer, traceLogger, "6000")
-	defer deps.Config.Close()
+	defer closeConfig(deps.Config)
 
 	server := netrpc.NewServer()
 	rpcService, err := rpc.NewRpcService(deps.TeePrinter, deps.TeePrinter, deps.Config, deps.RepoLocator, rpc.NewCommandRunner(), deps.Logger, Writer, server)
@@ -79,12 +84,19 @@ func (p *ChangeAllStacksPlugin) withRpcService(do func(rpcService *rpc.CliRpcSer
 		return err
 	}
 
-	return do(rpcService)
+	err = do(rpcService)
+
+	return err
+}
+
+func stopRpcService(rpcService *rpc.CliRpcService) {
+	fmt.Println("Stopping rpc service")
+	rpcService.Stop()
 }
 
 func (p *ChangeAllStacksPlugin) WithConnection(do func(cliConnection plugin.CliConnection) error) error {
-	return p.withRpcService(func (rpcService *rpc.CliRpcService) error {
-		defer rpcService.Stop()
+	err := p.withRpcService(func (rpcService *rpc.CliRpcService) error {
+		defer stopRpcService(rpcService)
 		rpcService.Start()
 
 		fmt.Printf("Started rpc service on port %q", rpcService.Port())
@@ -92,11 +104,17 @@ func (p *ChangeAllStacksPlugin) WithConnection(do func(cliConnection plugin.CliC
 		os.Args = []string{os.Args[0], rpcService.Port()}
 		plugin.Start(p)
 
-		return do(p.connection)
+		err := do(p.connection)
+
+		return err
 	})
+
+	return err
 }
 
 func WithCliConnection(do func(cliConnection plugin.CliConnection) error) error {
 	p := &ChangeAllStacksPlugin{}
-	return p.WithConnection(do)
+	e := p.WithConnection(do)
+
+	return e
 }
