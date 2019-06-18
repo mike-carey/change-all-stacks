@@ -8,8 +8,11 @@ BUILD_DIR ?= build
 	[[ -f .envrc ]] || cp .envrc.example .envrc
 env: .envrc
 
-test:
+test: build
+	@echo "Running ginkgo suite"
 	@./bin/test
+	@echo "Running integration suite"
+	@./vendor/github.com/sstephenson/bats/bin/bats test/*.bats
 
 build:
 	@./bin/build

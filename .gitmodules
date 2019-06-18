@@ -1,4 +1,10 @@
-[submodule "vendor/cicd-helpers"]
-	path = vendor/cicd-helpers
+[submodule "cicd-helpers"]
+	path = vendor/github.com/mike-carey/cicd-helpers
 	url = https://github.com/mike-carey/cicd-helpers.git
 	branch = dist/v0.1
+[submodule "bats-print"]
+	path = vendor/github.com/mike-carey/bats-print
+	url = https://github.com/mike-carey/bats-print.git
+[submodule "bats"]
+	path = vendor/github.com/sstephenson/bats
+	url = https://github.com/sstephenson/bats.git

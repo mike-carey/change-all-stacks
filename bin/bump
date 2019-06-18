@@ -4,7 +4,7 @@ function bump() {
   local version_file=${1:-version.go}
   local version=$(sed -n 's/.*Version = "\(.*\)".*/\1/p' $version_file)
 
-  local next_version=$(./vendor/cicd-helpers/bin/version $version)
+  local next_version=$(./vendor/github.com/mike-carey/cicd-helpers/bin/version $version)
 
   local current_branch=$(git branch | grep \* | cut -d ' ' -f2)
 
