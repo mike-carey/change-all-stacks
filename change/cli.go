@@ -4,6 +4,7 @@ type Options struct {
 	Config  string `short:"c" long:"config" description:"The configuration file to load" default:"cf.json"`
 	DryRun  bool   `short:"d" long:"dry-run" description:"Does not actually do the stack change, but instead prints what it would do"`
 	Verbose bool   `short:"v" long:"verbose" description:"Prints more output"`
+	Plugin  string `short:"p" login:"plugin" description:"The path to the stack-auditor plugin"`
 
 	Stacks struct {
 		From string
@@ -12,5 +13,5 @@ type Options struct {
 }
 
 func Go(opts *Options) error {
-	return NewRunner(opts.Config, opts.Verbose, opts.DryRun, opts.Stacks.From, opts.Stacks.To).Run()
+	return NewDefaultManager(opts).Go()
 }

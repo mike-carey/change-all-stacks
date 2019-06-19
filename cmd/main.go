@@ -42,7 +42,7 @@ func options() (*Options, error) {
 		if e != nil {
 			return nil, e
 		}
-		opts.Verbose = b
+		opts.DryRun = b
 	}
 
 	return opts, nil
