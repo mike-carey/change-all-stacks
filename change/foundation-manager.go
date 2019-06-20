@@ -9,29 +9,29 @@ import (
 )
 
 type FoundationManager interface {
-	ChangeStacksInFoundation(foundationName string, config cfclient.Config, fromStack string, toStack string, dryrun bool, pluginPath string, threads int) error
+	ChangeStacksInFoundation(foundationName string, config *cfclient.Config, fromStack string, toStack string, dryrun bool, pluginPath string, threads int) error
 }
 
 func NewDefaultFoundationManager(logger Logger) FoundationManager {
-	return NewFoundationManager(logger, NewDefaultSpaceManager(logger), NewInquisitorFactory())
+	return NewFoundationManager(logger, NewDefaultSpaceManager(logger), NewInquisitorManager())
 }
 
-func NewFoundationManager(logger Logger, spaceManager SpaceManager, inquisitorFactory InquisitorFactory) FoundationManager {
+func NewFoundationManager(logger Logger, spaceManager SpaceManager, inquisitorManager InquisitorManager) FoundationManager {
 	return &foundationManager{
 		logger: logger,
 		spaceManager: spaceManager,
-		inquisitorFactory: inquisitorFactory,
+		inquisitorManager: inquisitorManager,
 	}
 }
 
 type foundationManager struct {
 	logger Logger
 	spaceManager SpaceManager
-	inquisitorFactory InquisitorFactory
+	inquisitorManager InquisitorManager
 }
 
-func (m *foundationManager) ChangeStacksInFoundation(foundationName string, config cfclient.Config, fromStack string, toStack string, dryrun bool, pluginPath string, threads int) error {
-	i, err := m.inquisitorFactory.CreateInquisitor(config)
+func (m *foundationManager) ChangeStacksInFoundation(foundationName string, config *cfclient.Config, fromStack string, toStack string, dryrun bool, pluginPath string, threads int) error {
+	i, err := m.inquisitorManager.GetInquisitor(config)
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func (m *foundationManager) ChangeStacksInFoundation(foundationName string, conf
 			}
 
 			errCh <- m.spaceManager.ChangeStacksInSpace(config, *org, *space, apps, toStack, dryrun, pluginPath)
-		}(i, config, spaceGuid, apps)
+		}(i, *config, spaceGuid, apps)
 	}
 
 

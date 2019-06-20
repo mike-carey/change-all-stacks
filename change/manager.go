@@ -91,9 +91,9 @@ func (m *Manager) ChangeAllStacks(foundations config.Foundations) error {
 	errCh := make(chan error, 0)
 
 	for name, conf := range foundations {
-		go func(name string, conf cfclient.Config) {
+		go func(name string, conf *cfclient.Config) {
 			errCh <- m.foundationManager.ChangeStacksInFoundation(name, conf, m.Options.Stacks.From, m.Options.Stacks.To, m.Options.DryRun, m.Options.Plugin, m.Options.Threads)
-		}(name, *conf)
+		}(name, conf)
 	}
 
 	errPool := make([]error, 0)
