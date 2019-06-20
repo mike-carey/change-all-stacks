@@ -29,16 +29,8 @@
   name = "gopkg.in/fsnotify.v1"
 
 [[constraint]]
-  name = "code.cloudfoundry.org/cli"
-  version = "6.45.0"
-
-[[constraint]]
   branch = "master"
   name = "github.com/cloudfoundry-community/go-cfclient"
-
-[[constraint]]
-  name = "github.com/cloudfoundry/stack-auditor"
-  version = "0.0.4"
 
 [[constraint]]
   name = "github.com/jessevdk/go-flags"

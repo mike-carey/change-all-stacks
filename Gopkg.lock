@@ -2,17 +2,6 @@
 
 
 [[projects]]
-  digest = "1:f0e1bc4562c35f62b577a7a0be0fb0657f2805c637c2ac69d92b3a7d2fd91f1b"
-  name = "code.cloudfoundry.org/cli"
-  packages = [
-    "plugin",
-    "plugin/models",
-  ]
-  pruneopts = "UT"
-  revision = "5f9ff16f99a0345f98f147765db0e36aef91c795"
-  version = "v6.45.0"
-
-[[projects]]
   branch = "master"
   digest = "1:ef4eaf0b9b15b3f5e5afaf6a52303c39d46a9c3b6d13d0d81e4b785002606692"
   name = "code.cloudfoundry.org/gofileutils"
@@ -29,41 +18,12 @@
   version = "v1.4.2"
 
 [[projects]]
-  digest = "1:b6d886569181ec96ca83d529f4d6ba0cbf92ace7bb6f633f90c5f34d9bba7aab"
-  name = "github.com/blang/semver"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "ba2c2ddd89069b46a7011d4106f6868f17ee1705"
-  version = "v3.6.1"
-
-[[projects]]
-  branch = "master"
-  digest = "1:69e7139f6d546cc6ffc9ca98e7f4cfe95be479f4044eb30bb92017b5b87c9d40"
-  name = "github.com/buger/jsonparser"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "bf1c66bbce23153d89b23f8960071a680dbef54b"
-
-[[projects]]
   branch = "master"
   digest = "1:8597ea40ac83a647f7f67db149d1f0921d7baf873d2fd14ee3e475adeecae0ae"
   name = "github.com/cloudfoundry-community/go-cfclient"
   packages = ["."]
   pruneopts = "UT"
   revision = "16c98753d3152f9d80d3c121523536858095a3da"
-
-[[projects]]
-  digest = "1:23fbbaf51fd840820fa2af5fc90795fd9501e2f3e79ad796409693defaec1472"
-  name = "github.com/cloudfoundry/stack-auditor"
-  packages = [
-    "cf",
-    "changer",
-    "resources",
-    "utils",
-  ]
-  pruneopts = "UT"
-  revision = "4c22a27cc42a835d0edb41fe480de2d38d4b3239"
-  version = "v0.0.4"
 
 [[projects]]
   digest = "1:318f1c959a8a740366fce4b1e1eb2fd914036b4af58fbd0a003349b305f118ad"
@@ -185,7 +145,7 @@
     "html/charset",
   ]
   pruneopts = "UT"
-  revision = "d28f0bde5980168871434b95cfc858db9f2a7a99"
+  revision = "b5b0513f8c1bb7c1e3e6f168fba117131fe2614a"
 
 [[projects]]
   branch = "master"
@@ -201,7 +161,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:b0030937de25ab3701e2eff9e0cf50a699def76c8e52ae6cc934c32675511a37"
+  digest = "1:5845a691372a16720587291c73cc02c7350edabbab5be2a3a42c883e809da344"
   name = "golang.org/x/sys"
   packages = [
     "unix",
@@ -210,7 +170,7 @@
     "windows/svc/eventlog",
   ]
   pruneopts = "UT"
-  revision = "b47fdc937951267e2d980171881317deea47f29b"
+  revision = "6f217b454f458f9c81d48c1fff9e6f5ea6b0bbf2"
 
 [[projects]]
   digest = "1:8a0baffd5559acaa560f854d7d525c02f4fec2d4f8a214398556fb661a10f6e0"
@@ -285,16 +245,10 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "code.cloudfoundry.org/cli/plugin",
-    "code.cloudfoundry.org/cli/plugin/models",
     "github.com/cloudfoundry-community/go-cfclient",
-    "github.com/cloudfoundry/stack-auditor/cf",
-    "github.com/cloudfoundry/stack-auditor/changer",
-    "github.com/cloudfoundry/stack-auditor/utils",
     "github.com/jessevdk/go-flags",
     "github.com/mike-carey/cfquery/config",
     "github.com/mike-carey/cfquery/query",
-    "github.com/mike-carey/cfquery/util",
     "github.com/onsi/ginkgo",
     "github.com/onsi/gomega",
   ]

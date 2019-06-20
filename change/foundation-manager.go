@@ -9,7 +9,7 @@ import (
 )
 
 type FoundationManager interface {
-	ChangeStacksInFoundation(foundationName string, config cfclient.Config, fromStack string, toStack string, dryrun bool, pluginPath string) error
+	ChangeStacksInFoundation(foundationName string, config cfclient.Config, fromStack string, toStack string, dryrun bool, pluginPath string, threads int) error
 }
 
 func NewDefaultFoundationManager(logger Logger) FoundationManager {
@@ -30,7 +30,7 @@ type foundationManager struct {
 	inquisitorFactory InquisitorFactory
 }
 
-func (m *foundationManager) ChangeStacksInFoundation(foundationName string, config cfclient.Config, fromStack string, toStack string, dryrun bool, pluginPath string) error {
+func (m *foundationManager) ChangeStacksInFoundation(foundationName string, config cfclient.Config, fromStack string, toStack string, dryrun bool, pluginPath string, threads int) error {
 	i, err := m.inquisitorFactory.CreateInquisitor(config)
 	if err != nil {
 		return err
@@ -58,8 +58,19 @@ func (m *foundationManager) ChangeStacksInFoundation(foundationName string, conf
 
 	m.logger.Debugf("Changing stacks from '%s' to '%s' for %i apps in %s", fromStack, toStack, len(mapps), foundationName)
 	errCh := make(chan error)
+
+	var sem = make(chan int, threads)
 	for spaceGuid, apps := range mapps {
+
 		go func(i query.Inquisitor, config cfclient.Config, spaceGuid string, apps query.Apps) {
+			sem <- 1
+			m.logger.Debugf("Acquired lock")
+
+			defer func() {
+				<-sem
+				m.logger.Debugf("Released lock")
+			}()
+
 			m.logger.Debugf("Getting space from guid")
 			space, err := i.GetSpaceByGuid(spaceGuid)
 			if err != nil {

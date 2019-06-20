@@ -6,6 +6,7 @@ type Options struct {
 	Verbose bool   `short:"v" long:"verbose" description:"Prints more output"`
 	Plugin  string `short:"p" long:"plugin" description:"The path to the stack-auditor plugin"`
 	Interactive bool `short:"i" long:"interactive" description:"Print the dry run before apply"`
+	Threads int `short:"t" long:"threads" description:"The number of threads to run" default:"10"`
 
 	Stacks struct {
 		From string
