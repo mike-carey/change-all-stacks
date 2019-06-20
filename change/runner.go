@@ -76,7 +76,7 @@ func (r *runner) run(args ...interface{}) error {
 		}
 	} else {
 		r.logger.Debugf("Running cf command: %s", strings.Join(printArgs, " "))
-		// err = r.command.Execute(runArgs...)
+		err = r.command.Execute(runArgs...)
 	}
 
 	return err

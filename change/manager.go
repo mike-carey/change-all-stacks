@@ -1,6 +1,10 @@
 package change
 
 import (
+	"fmt"
+	"os"
+	"bufio"
+
 	cfclient "github.com/cloudfoundry-community/go-cfclient"
 
 	"github.com/mike-carey/cfquery/config"
@@ -32,6 +36,45 @@ func (m *Manager) Go() error {
 	foundations, err := config.LoadConfig(m.Options.Config)
 	if err != nil {
 		return err
+	}
+
+	if m.Options.Interactive {
+		m.logger.Info("Running dry run")
+		m.logger.Info("-----------------------------------")
+
+		m.Options.DryRun = true
+
+		err = m.ChangeAllStacks(foundations)
+		if err != nil {
+			return err
+		}
+
+		reader := bufio.NewReader(os.Stdin)
+
+		m.logger.Info("-----------------------------------")
+
+		text := ""
+		for text == "" {
+			fmt.Print("Proceed? [Y/n]: ")
+			text, _ = reader.ReadString('\n')
+
+			switch text[0:1] {
+			case "":
+				continue
+			case "y":
+				break
+			case "n":
+				m.logger.Info("Bailing out.")
+				return nil
+			default:
+				m.logger.Info("Please specify 'y' or 'n'.")
+				continue
+			}
+		}
+
+		m.Options.DryRun = false
+
+		m.logger.Info("-----------------------------------")
 	}
 
 	err = m.ChangeAllStacks(foundations)
