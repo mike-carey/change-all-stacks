@@ -9,7 +9,7 @@ import (
 )
 
 type FoundationManager interface {
-	ChangeStacksInFoundation(foundationName string, config *cfclient.Config, fromStack string, toStack string, dryrun bool, pluginPath string, threads int) error
+	ChangeStacksInFoundation(foundationName string, config *cfclient.Config, opts *Options) error
 }
 
 func NewDefaultFoundationManager(logger Logger) FoundationManager {
@@ -30,7 +30,14 @@ type foundationManager struct {
 	inquisitorManager InquisitorManager
 }
 
-func (m *foundationManager) ChangeStacksInFoundation(foundationName string, config *cfclient.Config, fromStack string, toStack string, dryrun bool, pluginPath string, threads int) error {
+func (m *foundationManager) ChangeStacksInFoundation(foundationName string, config *cfclient.Config, opts *Options) error {
+	fromStack := opts.Stacks.From
+	toStack := opts.Stacks.To
+	dryrun := opts.DryRun
+	pluginPath := opts.Plugin
+	threads := opts.Threads
+	orgs := opts.Orgs
+
 	i, err := m.inquisitorManager.GetInquisitor(config)
 	if err != nil {
 		return err
@@ -41,6 +48,29 @@ func (m *foundationManager) ChangeStacksInFoundation(foundationName string, conf
 	apps, err := i.GetAllApps()
 	if err != nil {
 		return err
+	}
+
+	// Allow specific orgs to be specified by name
+	if len(orgs) > 0 {
+		apps, err = query.AppFilterBy(apps, func (app cfclient.App) (bool, error) {
+			space, err := i.GetSpaceByGuid(app.SpaceGuid)
+			if err != nil {
+				return false, err
+			}
+
+			org, err := i.GetOrgByGuid(space.OrganizationGuid)
+			if err != nil {
+				return false, err
+			}
+
+			for _, o := range orgs {
+				if o == org.Name {
+					return true, nil
+				}
+			}
+
+			return false, nil
+		})
 	}
 
 	m.logger.Debugf("Filtering %i apps by stackname '%s' in %s", len(apps), fromStack, foundationName)
