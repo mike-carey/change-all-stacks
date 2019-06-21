@@ -15,19 +15,20 @@ type InquisitorManager interface {
 func NewInquisitorManager() InquisitorManager {
 	return &inquisitorManager{
 		instances: make(map[*cfclient.Config]query.Inquisitor, 0),
-		mutex: sync.RWMutex{},
+		mutex: sync.Mutex{},
 	}
 }
 
 type inquisitorManager struct {
 	instances map[*cfclient.Config]query.Inquisitor
-	mutex sync.RWMutex
+	mutex sync.Mutex
 }
 
 func (i *inquisitorManager) GetInquisitor(config *cfclient.Config) (query.Inquisitor, error) {
-	i.mutex.RLock()
+	i.mutex.Lock()
+	defer i.mutex.Unlock()
+
 	if _, ok := i.instances[config]; !ok {
-		i.mutex.Lock()
 		cli, err := cfclient.NewClient(config)
 		if err != nil {
 			return nil, err
@@ -39,12 +40,9 @@ func (i *inquisitorManager) GetInquisitor(config *cfclient.Config) (query.Inquis
 		}
 
 		i.instances[config] = inquisitor
-		i.mutex.Unlock()
 	}
 
 	instance := i.instances[config]
-
-	i.mutex.RUnlock()
 
 	return instance, nil
 }

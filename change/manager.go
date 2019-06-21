@@ -37,6 +37,7 @@ func (m *Manager) Go() error {
 	if err != nil {
 		return err
 	}
+	m.logger.Debugf("Config loaded")
 
 	if m.Options.Interactive {
 		m.logger.Info("Running dry run")
@@ -77,6 +78,7 @@ func (m *Manager) Go() error {
 		m.logger.Info("-----------------------------------")
 	}
 
+	m.logger.Debugf("Changing all stacks in all foundations")
 	err = m.ChangeAllStacks(foundations)
 	if err != nil {
 		return err

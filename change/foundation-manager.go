@@ -38,10 +38,12 @@ func (m *foundationManager) ChangeStacksInFoundation(foundationName string, conf
 	threads := opts.Threads
 	orgs := opts.Orgs
 
+	m.logger.Debugf("Building inquisitor")
 	i, err := m.inquisitorManager.GetInquisitor(config)
 	if err != nil {
 		return err
 	}
+	m.logger.Debugf("Inquisitor built")
 
 	// Grab every app
 	m.logger.Debugf("Loading all apps in %s", foundationName)
@@ -52,6 +54,7 @@ func (m *foundationManager) ChangeStacksInFoundation(foundationName string, conf
 
 	// Allow specific orgs to be specified by name
 	if len(orgs) > 0 {
+		m.logger.Debugf("Filter by %i orgs", len(orgs))
 		apps, err = query.AppFilterBy(apps, func (app cfclient.App) (bool, error) {
 			space, err := i.GetSpaceByGuid(app.SpaceGuid)
 			if err != nil {
