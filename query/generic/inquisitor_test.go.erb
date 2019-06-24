@@ -1,0 +1,59 @@
+package generic_test
+
+import (
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
+	. "github.com/mike-carey/change-all-stacks/query"
+
+  fakes "github.com/mike-carey/change-all-stacks/query/fakes"
+)
+
+<%
+types = Hash.new
+len = ('Service.go'.length + 1) * -1
+
+Dir.glob('*-service.go').each do|f|
+  klass = f.split('-').map{|e| e.capitalize}.join[0..len]
+  type = klass[0].downcase + klass[1..-1]
+
+  types[type] = klass
+end
+
+ %>
+
+var _ = Describe("Inquisitor", func() {
+
+	var (
+		storage    *Storage
+		fakeClient *fakes.FakeCFClient
+		inquisitor Inquisitor
+	)
+
+	BeforeEach(func() {
+		storage = GetStorage()
+		fakeClient = GetFakeClient(storage)
+		inquisitor = NewInquisitor(fakeClient, GinkgoWriter)
+	})
+
+<% types.each do |type, klass| %>
+	It("Should get all <%= type %>s", func() {
+		items, err := inquisitor.GetAll<%= klass %>s()
+		Expect(err).To(BeNil())
+		Expect(items).Should(ConsistOf(storage.<%= klass %>s))
+	})
+
+	It("Should get <%= type %> by guid", func() {
+		item, err := inquisitor.Get<%= klass %>ByGuid("<%= klass %>-1")
+		Expect(err).To(BeNil())
+		Expect(item).Should(Equal(storage.<%= klass %>s[0]))
+	})
+
+	It("Should get <%= type %> by name", func() {
+		item, err := inquisitor.Get<%= klass %>ByName("<%= klass %>-1")
+		Expect(err).To(BeNil())
+		Expect(item).To(Equal(storage.<%= klass %>s[0]))
+	})
+<% end %>
+
+})
