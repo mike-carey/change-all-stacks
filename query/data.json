@@ -1,0 +1,34 @@
+{
+  "apps": [
+    {
+      "guid": "App-1",
+      "name": "App-1",
+      "space_guid": "Space-1"
+    }
+  ],
+  "spaces": [
+    {
+      "guid": "Space-1",
+      "name": "Space-1",
+      "org_guid": "Org-1"
+    }
+  ],
+  "orgs": [
+    {
+      "guid": "Org-1",
+      "name": "Org-1"
+    }
+  ],
+  "buildpacks": [
+    {
+      "guid": "Buildpack-1",
+      "name": "Buildpack-1"
+    }
+  ],
+  "stacks": [
+    {
+      "guid": "Stack-1",
+      "name": "Stack-1"
+    }
+  ]
+}
