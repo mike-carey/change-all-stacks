@@ -9,6 +9,8 @@ type Options struct {
 	Threads int `short:"t" long:"threads" description:"The number of threads to run" default:"10"`
 	Orgs []string `short:"o" long:"org" description:"Org names to target"`
 
+	Read bool `short:"r" long:"read" description:"Do a read only"`
+
 	Stacks struct {
 		From string
 		To string

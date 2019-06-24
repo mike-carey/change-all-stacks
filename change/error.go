@@ -14,6 +14,10 @@ func (s *ErrorStack) Error() string {
 }
 
 func NewErrorStack(message string, errs []error) *ErrorStack {
+	if len(errs) < 1 {
+		return nil
+	}
+
 	return &ErrorStack{
 		message: message,
 		errors: errs,

@@ -3,13 +3,11 @@ package change
 import (
 	"fmt"
 
-	"github.com/mike-carey/cfquery/query"
-
 	"github.com/cloudfoundry-community/go-cfclient"
 )
 
 type SpaceManager interface {
-	ChangeStacksInSpace(config cfclient.Config, org cfclient.Org, space cfclient.Space, apps query.Apps, stack string, dryrun bool, pluginPath string) error
+	ChangeStacksInSpace(config cfclient.Config, org cfclient.Org, space cfclient.Space, apps []cfclient.App, stack string, dryrun bool, pluginPath string) error
 }
 
 func NewDefaultSpaceManager(logger Logger) SpaceManager {
@@ -28,7 +26,7 @@ type spaceManager struct {
 	runnerFactory RunnerFactory
 }
 
-func (m *spaceManager) ChangeStacksInSpace(config cfclient.Config, org cfclient.Org, space cfclient.Space, apps query.Apps, stack string, dryrun bool, pluginPath string) error {
+func (m *spaceManager) ChangeStacksInSpace(config cfclient.Config, org cfclient.Org, space cfclient.Space, apps []cfclient.App, stack string, dryrun bool, pluginPath string) error {
 	r := m.runnerFactory.CreateRunnerWithDefaultCommand(m.logger, dryrun)
 
 	var err error

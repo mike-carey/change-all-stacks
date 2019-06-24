@@ -1,15 +1,17 @@
 package change
 
 import (
+	"io/ioutil"
 	"sync"
 
-	"github.com/mike-carey/cfquery/query"
+	"github.com/mike-carey/change-all-stacks/query"
 
 	"github.com/cloudfoundry-community/go-cfclient"
 )
 
 type InquisitorManager interface {
 	GetInquisitor(config *cfclient.Config) (query.Inquisitor, error)
+	GetHelper(config *cfclient.Config) (InquisitorHelper, error)
 }
 
 func NewInquisitorManager() InquisitorManager {
@@ -34,7 +36,7 @@ func (i *inquisitorManager) GetInquisitor(config *cfclient.Config) (query.Inquis
 			return nil, err
 		}
 
-		inquisitor, err := query.NewInquisitor(cli), nil
+		inquisitor, err := query.NewInquisitor(cli, ioutil.Discard), nil
 		if err != nil {
 			return inquisitor, err
 		}
@@ -45,4 +47,13 @@ func (i *inquisitorManager) GetInquisitor(config *cfclient.Config) (query.Inquis
 	instance := i.instances[config]
 
 	return instance, nil
+}
+
+func (i *inquisitorManager) GetHelper(config *cfclient.Config) (InquisitorHelper, error) {
+	inq, err := i.GetInquisitor(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewInquisitorHelper(inq), nil
 }

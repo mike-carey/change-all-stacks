@@ -34,11 +34,11 @@ func (l *logger) logf(w io.Writer, msg string, args ...interface{}) {
 }
 
 func (l *logger) Info(msg string) {
-	l.log(os.Stdout, msg)
+	l.log(os.Stderr, msg)
 }
 
 func (l *logger) Infof(msg string, args ...interface{}) {
-	l.logf(os.Stdout, msg, args...)
+	l.logf(os.Stderr, msg, args...)
 }
 
 func (l *logger) Debug(msg string) {

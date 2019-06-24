@@ -8,6 +8,7 @@ import (
 	cfclient "github.com/cloudfoundry-community/go-cfclient"
 
 	"github.com/mike-carey/cfquery/config"
+	"github.com/mike-carey/change-all-stacks/data"
 )
 
 type Manager struct {
@@ -38,6 +39,30 @@ func (m *Manager) Go() error {
 		return err
 	}
 	m.logger.Debugf("Config loaded")
+
+	if m.Options.Read {
+		m.logger.Infof("Reading all apps with stack %s", m.Options.Stacks.From)
+		m.logger.Info("-----------------------------------")
+		d, e := m.ReadAllStacks(foundations)
+		if e != nil {
+			m.logger.Debugf("An error occurred: %T, %q", e, e)
+			return e
+		}
+
+		m.logger.Debug("Using default formatter")
+		formatter := data.NewDefaultFormatter()
+		for _, da := range d {
+			s, e := data.FormatData(formatter, da)
+			if e != nil {
+				return e
+			}
+
+			fmt.Println(s)
+		}
+
+		m.logger.Info("-----------------------------------")
+		return nil
+	}
 
 	if m.Options.Interactive {
 		m.logger.Info("Running dry run")
@@ -87,6 +112,51 @@ func (m *Manager) Go() error {
 	m.logger.Debug("All done!")
 
 	return nil
+}
+
+type result struct {
+	Key string
+	Data data.Data
+}
+
+func (m *Manager) ReadAllStacks(foundations config.Foundations) ([]data.Data, error) {
+	errCh := make(chan error, 0)
+	dataCh := make(chan data.Data, 0)
+
+	for name, conf := range foundations {
+		go func(name string, conf *cfclient.Config) {
+			d, err := m.foundationManager.ReadAllStacksInFoundation(name, conf, m.Options)
+			if err != nil {
+				errCh <- err
+				return
+			}
+
+			dataCh <- d
+			// dataCh <- result{
+			// 	Key: name,
+			// 	Data: d,
+			// }
+		}(name, conf)
+	}
+
+	errPool := make([]error, 0)
+	// dataPool := make(map[string]data.Data, 0)
+	dataPool := make([]data.Data, 0)
+	for _, _ = range foundations {
+		select {
+		case err := <-errCh:
+			errPool = append(errPool, err)
+		case d := <-dataCh:
+			// dataPool[d.Key] = d.Data
+			dataPool = append(dataPool, d)
+		}
+	}
+
+	if len(errPool) > 0 {
+		return nil, NewErrorStack("Failed to read all stacks", errPool)
+	}
+
+	return dataPool, nil
 }
 
 func (m *Manager) ChangeAllStacks(foundations config.Foundations) error {

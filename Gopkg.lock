@@ -18,6 +18,14 @@
   version = "v1.4.2"
 
 [[projects]]
+  digest = "1:f438d91be142877c3ad83157992c91de787ddfbddcc2a7da1ef6ef61606cadc4"
+  name = "github.com/cheekybits/genny"
+  packages = ["generic"]
+  pruneopts = "UT"
+  revision = "d2cf3cdd35ce0d789056c4bc02a4d6349c947caf"
+  version = "v1.0.0"
+
+[[projects]]
   branch = "master"
   digest = "1:8597ea40ac83a647f7f67db149d1f0921d7baf873d2fd14ee3e475adeecae0ae"
   name = "github.com/cloudfoundry-community/go-cfclient"
@@ -65,14 +73,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:77d64770a6398fef69fcaa700b8850437271dcd2ddcd13588d6e32754f6ebb2e"
+  digest = "1:d74c65f2613221791c9ac245521ea031477361b0fc5d218a51eba9c1bf78940b"
   name = "github.com/mike-carey/cfquery"
   packages = [
-    "cf",
     "config",
     "logger",
-    "query",
-    "util",
   ]
   pruneopts = "UT"
   revision = "5e2c4aac9bd0dfb33e0431e254ba5952b37c737f"
@@ -145,7 +150,7 @@
     "html/charset",
   ]
   pruneopts = "UT"
-  revision = "b5b0513f8c1bb7c1e3e6f168fba117131fe2614a"
+  revision = "3b0461eec859c4b73bb64fdc8285971fd33e3938"
 
 [[projects]]
   branch = "master"
@@ -161,7 +166,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:5845a691372a16720587291c73cc02c7350edabbab5be2a3a42c883e809da344"
+  digest = "1:286f6554249263531d9ba6555cd84f8807b361218a1696a273e2d25f61e72c0b"
   name = "golang.org/x/sys"
   packages = [
     "unix",
@@ -170,7 +175,7 @@
     "windows/svc/eventlog",
   ]
   pruneopts = "UT"
-  revision = "6f217b454f458f9c81d48c1fff9e6f5ea6b0bbf2"
+  revision = "c5567b49c5d04a5f83870795b8c0e2df43a8ce32"
 
 [[projects]]
   digest = "1:8a0baffd5559acaa560f854d7d525c02f4fec2d4f8a214398556fb661a10f6e0"
@@ -245,12 +250,14 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/cheekybits/genny/generic",
     "github.com/cloudfoundry-community/go-cfclient",
     "github.com/jessevdk/go-flags",
     "github.com/mike-carey/cfquery/config",
-    "github.com/mike-carey/cfquery/query",
+    "github.com/mike-carey/cfquery/logger",
     "github.com/onsi/ginkgo",
     "github.com/onsi/gomega",
+    "github.com/pkg/errors",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
