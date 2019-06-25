@@ -2,6 +2,8 @@
 
 BUILD_DIR ?= build
 
+BATS ?= ./.lib/bats/bin/bats
+
 .PHONY: *
 
 .envrc:
@@ -12,7 +14,7 @@ test: build
 	@echo "Running ginkgo suite"
 	@./bin/test
 	@echo "Running integration suite"
-	@./vendor/github.com/sstephenson/bats/bin/bats test/*.bats
+	@$(BATS) test/*.bats
 
 build:
 	@./bin/build
