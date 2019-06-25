@@ -37,13 +37,15 @@ func (s *StackService) logf(msg string, args ...interface{}) {
 }
 
 func (s *StackService) lock() {
-	s.logf("Locking")
+	s.logf("Locking %T", s)
 	s.mutex.Lock()
+	s.logf("Locked %T", s)
 }
 
 func (s *StackService) unlock() {
-	s.logf("Unlocking")
+	s.logf("Unlocking %T", s)
 	s.mutex.Unlock()
+	s.logf("Unlocked %T", s)
 }
 
 func (s *StackService) GetAllStacks() ([]cfclient.Stack, error) {
@@ -86,7 +88,7 @@ func (s *StackService) GetStackByGuid(guid string) (cfclient.Stack, error) {
 	if s.fullyLoaded {
 		s.logf("%T is already fully loaded but did not find %s in cacheMap", s, guid)
 		item := cfclient.Stack{}
-		return item, fmt.Errorf("Could not find %T by guid: %s", item, guid)
+		return item, NewNotFoundError(item, "guid", guid)
 	}
 
 	s.logf("Did not find cached %T and %T is not fully loaded, querying by guid: %s", cfclient.Stack{}, s, guid)
@@ -117,7 +119,7 @@ func (s *StackService) GetStackByName(name string) (cfclient.Stack, error) {
 	}
 
 	item := cfclient.Stack{}
-	return item, fmt.Errorf("Could not find %T by name: %s", item, name)
+	return item, NewNotFoundError(item, "name", name)
 }
 
 // Proxy all functions onto the inquisitor struct

@@ -37,13 +37,15 @@ func (s *ItemService) logf(msg string, args ...interface{}) {
 }
 
 func (s *ItemService) lock() {
-	s.logf("Locking")
+	s.logf("Locking %T", s)
 	s.mutex.Lock()
+	s.logf("Locked %T", s)
 }
 
 func (s *ItemService) unlock() {
-	s.logf("Unlocking")
+	s.logf("Unlocking %T", s)
 	s.mutex.Unlock()
+	s.logf("Unlocked %T", s)
 }
 
 func (s *ItemService) GetAllItems() ([]cfclient.Item, error) {
@@ -86,7 +88,7 @@ func (s *ItemService) GetItemByGuid(guid string) (cfclient.Item, error) {
 	if s.fullyLoaded {
 		s.logf("%T is already fully loaded but did not find %s in cacheMap", s, guid)
 		item := cfclient.Item{}
-		return item, fmt.Errorf("Could not find %T by guid: %s", item, guid)
+		return item, NewNotFoundError(item, "guid", guid)
 	}
 
 	s.logf("Did not find cached %T and %T is not fully loaded, querying by guid: %s", cfclient.Item{}, s, guid)
@@ -116,7 +118,7 @@ func (s *ItemService) GetItemByName(name string) (cfclient.Item, error) {
 	}
 
 	item := cfclient.Item{}
-	return item, fmt.Errorf("Could not find %T by name: %s", item, name)
+	return item, NewNotFoundError(item, "name", name)
 }
 
 // Proxy all functions onto the inquisitor struct

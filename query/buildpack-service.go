@@ -37,13 +37,15 @@ func (s *BuildpackService) logf(msg string, args ...interface{}) {
 }
 
 func (s *BuildpackService) lock() {
-	s.logf("Locking")
+	s.logf("Locking %T", s)
 	s.mutex.Lock()
+	s.logf("Locked %T", s)
 }
 
 func (s *BuildpackService) unlock() {
-	s.logf("Unlocking")
+	s.logf("Unlocking %T", s)
 	s.mutex.Unlock()
+	s.logf("Unlocked %T", s)
 }
 
 func (s *BuildpackService) GetAllBuildpacks() ([]cfclient.Buildpack, error) {
@@ -86,7 +88,7 @@ func (s *BuildpackService) GetBuildpackByGuid(guid string) (cfclient.Buildpack, 
 	if s.fullyLoaded {
 		s.logf("%T is already fully loaded but did not find %s in cacheMap", s, guid)
 		item := cfclient.Buildpack{}
-		return item, fmt.Errorf("Could not find %T by guid: %s", item, guid)
+		return item, NewNotFoundError(item, "guid", guid)
 	}
 
 	s.logf("Did not find cached %T and %T is not fully loaded, querying by guid: %s", cfclient.Buildpack{}, s, guid)
@@ -116,7 +118,7 @@ func (s *BuildpackService) GetBuildpackByName(name string) (cfclient.Buildpack, 
 	}
 
 	item := cfclient.Buildpack{}
-	return item, fmt.Errorf("Could not find %T by name: %s", item, name)
+	return item, NewNotFoundError(item, "name", name)
 }
 
 // Proxy all functions onto the inquisitor struct

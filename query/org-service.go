@@ -37,13 +37,15 @@ func (s *OrgService) logf(msg string, args ...interface{}) {
 }
 
 func (s *OrgService) lock() {
-	s.logf("Locking")
+	s.logf("Locking %T", s)
 	s.mutex.Lock()
+	s.logf("Locked %T", s)
 }
 
 func (s *OrgService) unlock() {
-	s.logf("Unlocking")
+	s.logf("Unlocking %T", s)
 	s.mutex.Unlock()
+	s.logf("Unlocked %T", s)
 }
 
 func (s *OrgService) GetAllOrgs() ([]cfclient.Org, error) {
@@ -86,7 +88,7 @@ func (s *OrgService) GetOrgByGuid(guid string) (cfclient.Org, error) {
 	if s.fullyLoaded {
 		s.logf("%T is already fully loaded but did not find %s in cacheMap", s, guid)
 		item := cfclient.Org{}
-		return item, fmt.Errorf("Could not find %T by guid: %s", item, guid)
+		return item, NewNotFoundError(item, "guid", guid)
 	}
 
 	s.logf("Did not find cached %T and %T is not fully loaded, querying by guid: %s", cfclient.Org{}, s, guid)
@@ -116,7 +118,7 @@ func (s *OrgService) GetOrgByName(name string) (cfclient.Org, error) {
 	}
 
 	item := cfclient.Org{}
-	return item, fmt.Errorf("Could not find %T by name: %s", item, name)
+	return item, NewNotFoundError(item, "name", name)
 }
 
 // Proxy all functions onto the inquisitor struct
