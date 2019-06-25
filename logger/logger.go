@@ -1,4 +1,4 @@
-package change
+package logger
 
 import (
 	"io"

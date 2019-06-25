@@ -1,8 +1,10 @@
-package change
+package cf
 
 import (
 	"fmt"
 	"strings"
+
+	"github.com/mike-carey/change-all-stacks/logger"
 )
 
 const (
@@ -26,7 +28,7 @@ type Runner interface {
 	ChangeStack(app string, stack string) error
 }
 
-func NewRunnerWithDefaultCommand(logger Logger, dryrun bool) Runner {
+func NewRunnerWithDefaultCommand(logger logger.Logger, dryrun bool) Runner {
 	home := NewTempCFHome("")
 
 	return &runner{
@@ -36,7 +38,7 @@ func NewRunnerWithDefaultCommand(logger Logger, dryrun bool) Runner {
 	}
 }
 
-func NewRunner(command CFCommand, logger Logger, dryrun bool) Runner {
+func NewRunner(command CFCommand, logger logger.Logger, dryrun bool) Runner {
 	return &runner{
 		command: command,
 		logger: logger,
@@ -48,7 +50,7 @@ type runner struct {
 	Name string
 	home CFHome
 	command CFCommand
-	logger Logger
+	logger logger.Logger
 	dryrun bool
 }
 

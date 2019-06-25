@@ -9,21 +9,22 @@ import (
 
 	"github.com/mike-carey/change-all-stacks/config"
 	"github.com/mike-carey/change-all-stacks/data"
+	"github.com/mike-carey/change-all-stacks/logger"
 )
 
 type Manager struct {
 	Options *Options
-	logger Logger
+	logger logger.Logger
 	foundationManager FoundationManager
 }
 
 func NewDefaultManager(opts *Options) *Manager {
-	logger := NewLogger(opts.Verbose)
+	logger := logger.NewLogger(opts.Verbose)
 
 	return NewManager(opts, logger, NewDefaultFoundationManager(logger))
 }
 
-func NewManager(opts *Options, logger Logger, foundationManager FoundationManager) *Manager {
+func NewManager(opts *Options, logger logger.Logger, foundationManager FoundationManager) *Manager {
 	return &Manager{
 		Options: opts,
 		logger: logger,
@@ -34,7 +35,7 @@ func NewManager(opts *Options, logger Logger, foundationManager FoundationManage
 func (m *Manager) Go() error {
 	m.logger.Debugf("Loading config: %s", m.Options.Config)
 
-	foundations, err := config.LoadConfig(m.Options.Config)
+	foundations, err := config.LoadConfigFromFile(m.Options.Config)
 	if err != nil {
 		return err
 	}
@@ -119,7 +120,7 @@ type result struct {
 	Data data.Data
 }
 
-func (m *Manager) ReadAllStacks(foundations config.Foundations) ([]data.Data, error) {
+func (m *Manager) ReadAllStacks(foundations config.Configs) ([]data.Data, error) {
 	errCh := make(chan error, 0)
 	dataCh := make(chan data.Data, 0)
 
@@ -159,7 +160,7 @@ func (m *Manager) ReadAllStacks(foundations config.Foundations) ([]data.Data, er
 	return dataPool, nil
 }
 
-func (m *Manager) ChangeAllStacks(foundations config.Foundations) error {
+func (m *Manager) ChangeAllStacks(foundations config.Configs) error {
 	errCh := make(chan error, 0)
 
 	for name, conf := range foundations {

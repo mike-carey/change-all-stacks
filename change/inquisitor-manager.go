@@ -9,6 +9,7 @@ import (
 	"github.com/cloudfoundry-community/go-cfclient"
 )
 
+//go:generate counterfeiter -o fakes/fake_inquisitor_manager.go InquisitorManager
 type InquisitorManager interface {
 	GetInquisitor(config *cfclient.Config) (query.Inquisitor, error)
 	GetHelper(config *cfclient.Config) (InquisitorHelper, error)

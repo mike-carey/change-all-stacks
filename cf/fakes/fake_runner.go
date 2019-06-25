@@ -4,7 +4,7 @@ package fakes
 import (
 	"sync"
 
-	"github.com/mike-carey/change-all-stacks/change"
+	"github.com/mike-carey/change-all-stacks/cf"
 )
 
 type FakeRunner struct {
@@ -407,4 +407,4 @@ func (fake *FakeRunner) recordInvocation(key string, args []interface{}) {
 	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
-var _ change.Runner = new(FakeRunner)
+var _ cf.Runner = new(FakeRunner)

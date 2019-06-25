@@ -3,18 +3,22 @@ package change
 import (
 	"fmt"
 
+	"github.com/mike-carey/change-all-stacks/cf"
+	"github.com/mike-carey/change-all-stacks/logger"
+
 	"github.com/cloudfoundry-community/go-cfclient"
 )
 
+//go:generate counterfeiter -o fakes/fake_space_manager.go SpaceManager
 type SpaceManager interface {
 	ChangeStacksInSpace(config cfclient.Config, org cfclient.Org, space cfclient.Space, apps []cfclient.App, stack string, dryrun bool, pluginPath string) error
 }
 
-func NewDefaultSpaceManager(logger Logger) SpaceManager {
-	return NewSpaceManager(logger, NewRunnerFactory())
+func NewDefaultSpaceManager(logger logger.Logger) SpaceManager {
+	return NewSpaceManager(logger, cf.NewRunnerFactory())
 }
 
-func NewSpaceManager(logger Logger, runnerFactory RunnerFactory) SpaceManager {
+func NewSpaceManager(logger logger.Logger, runnerFactory cf.RunnerFactory) SpaceManager {
 	return &spaceManager{
 		logger: logger,
 		runnerFactory: runnerFactory,
@@ -22,8 +26,8 @@ func NewSpaceManager(logger Logger, runnerFactory RunnerFactory) SpaceManager {
 }
 
 type spaceManager struct {
-	logger Logger
-	runnerFactory RunnerFactory
+	logger logger.Logger
+	runnerFactory cf.RunnerFactory
 }
 
 func (m *spaceManager) ChangeStacksInSpace(config cfclient.Config, org cfclient.Org, space cfclient.Space, apps []cfclient.App, stack string, dryrun bool, pluginPath string) error {
@@ -52,7 +56,7 @@ func (m *spaceManager) ChangeStacksInSpace(config cfclient.Config, org cfclient.
 
 	errCh := make(chan error)
 	for _, app := range apps {
-		go func(runner Runner, app string, stack string) {
+		go func(runner cf.Runner, app string, stack string) {
 			errCh <- runner.ChangeStack(app, stack)
 		}(r, app.Name, stack)
 	}

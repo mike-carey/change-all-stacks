@@ -4,7 +4,7 @@ package fakes
 import (
 	"sync"
 
-	"github.com/mike-carey/change-all-stacks/change"
+	"github.com/mike-carey/change-all-stacks/logger"
 )
 
 type FakeLogger struct {
@@ -190,4 +190,4 @@ func (fake *FakeLogger) recordInvocation(key string, args []interface{}) {
 	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
-var _ change.Logger = new(FakeLogger)
+var _ logger.Logger = new(FakeLogger)

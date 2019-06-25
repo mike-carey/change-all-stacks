@@ -1,4 +1,4 @@
-package change_test
+package cf_test
 
 import (
 	"fmt"
@@ -6,22 +6,24 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	. "github.com/mike-carey/change-all-stacks/change"
+	. "github.com/mike-carey/change-all-stacks/cf"
 
-	fakes "github.com/mike-carey/change-all-stacks/change/fakes"
+	fakes "github.com/mike-carey/change-all-stacks/cf/fakes"
+	lfakes "github.com/mike-carey/change-all-stacks/logger/fakes"
+
 )
 
 var _ = Describe("Runner", func() {
 
 	var (
 		fakeCommand *fakes.FakeCFCommand
-		fakeLogger *fakes.FakeLogger
+		fakeLogger *lfakes.FakeLogger
 		runner Runner
 	)
 
 	BeforeEach(func() {
 		fakeCommand = new(fakes.FakeCFCommand)
-		fakeLogger = new(fakes.FakeLogger)
+		fakeLogger = new(lfakes.FakeLogger)
 	})
 
 	for active, cmd := range map[string]string{"enabled": "String", "disabled": "Execute"} {

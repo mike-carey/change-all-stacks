@@ -4,7 +4,7 @@ package fakes
 import (
 	"sync"
 
-	"github.com/mike-carey/change-all-stacks/change"
+	"github.com/mike-carey/change-all-stacks/cf"
 )
 
 type FakeCFCommand struct {
@@ -185,4 +185,4 @@ func (fake *FakeCFCommand) recordInvocation(key string, args []interface{}) {
 	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
-var _ change.CFCommand = new(FakeCFCommand)
+var _ cf.CFCommand = new(FakeCFCommand)

@@ -1,4 +1,4 @@
-package change_test
+package cf_test
 
 import (
 	"bytes"
@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	. "github.com/mike-carey/change-all-stacks/change"
+	. "github.com/mike-carey/change-all-stacks/cf"
 )
 
 var _ = Describe("Command", func() {

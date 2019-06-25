@@ -4,19 +4,22 @@ import (
 	"fmt"
 
 	"github.com/cloudfoundry-community/go-cfclient"
+
 	"github.com/mike-carey/change-all-stacks/data"
+	"github.com/mike-carey/change-all-stacks/logger"
 )
 
+//go:generate counterfeiter -o fakes/fake_foundation_manager.go FoundationManager
 type FoundationManager interface {
 	ReadAllStacksInFoundation(foundationName string, config *cfclient.Config, opts *Options) (data.Data, error)
 	ChangeStacksInFoundation(foundationName string, config *cfclient.Config, opts *Options) error
 }
 
-func NewDefaultFoundationManager(logger Logger) FoundationManager {
+func NewDefaultFoundationManager(logger logger.Logger) FoundationManager {
 	return NewFoundationManager(logger, NewDefaultSpaceManager(logger), NewInquisitorManager())
 }
 
-func NewFoundationManager(logger Logger, spaceManager SpaceManager, inquisitorManager InquisitorManager) FoundationManager {
+func NewFoundationManager(logger logger.Logger, spaceManager SpaceManager, inquisitorManager InquisitorManager) FoundationManager {
 	return &foundationManager{
 		logger: logger,
 		spaceManager: spaceManager,
@@ -25,7 +28,7 @@ func NewFoundationManager(logger Logger, spaceManager SpaceManager, inquisitorMa
 }
 
 type foundationManager struct {
-	logger Logger
+	logger logger.Logger
 	spaceManager SpaceManager
 	inquisitorManager InquisitorManager
 }

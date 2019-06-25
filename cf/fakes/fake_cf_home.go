@@ -4,7 +4,7 @@ package fakes
 import (
 	"sync"
 
-	"github.com/mike-carey/change-all-stacks/change"
+	"github.com/mike-carey/change-all-stacks/cf"
 )
 
 type FakeCFHome struct {
@@ -103,4 +103,4 @@ func (fake *FakeCFHome) recordInvocation(key string, args []interface{}) {
 	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
-var _ change.CFHome = new(FakeCFHome)
+var _ cf.CFHome = new(FakeCFHome)
