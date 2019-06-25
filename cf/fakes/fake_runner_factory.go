@@ -5,16 +5,14 @@ import (
 	"sync"
 
 	"github.com/mike-carey/change-all-stacks/cf"
-	"github.com/mike-carey/change-all-stacks/logger"
 )
 
 type FakeRunnerFactory struct {
-	CreateRunnerStub        func(cf.CFCommand, logger.Logger, bool) cf.Runner
+	CreateRunnerStub        func(cf.CFCommand, *cf.RunnerOptions) cf.Runner
 	createRunnerMutex       sync.RWMutex
 	createRunnerArgsForCall []struct {
 		arg1 cf.CFCommand
-		arg2 logger.Logger
-		arg3 bool
+		arg2 *cf.RunnerOptions
 	}
 	createRunnerReturns struct {
 		result1 cf.Runner
@@ -22,11 +20,10 @@ type FakeRunnerFactory struct {
 	createRunnerReturnsOnCall map[int]struct {
 		result1 cf.Runner
 	}
-	CreateRunnerWithDefaultCommandStub        func(logger.Logger, bool) cf.Runner
+	CreateRunnerWithDefaultCommandStub        func(*cf.RunnerOptions) cf.Runner
 	createRunnerWithDefaultCommandMutex       sync.RWMutex
 	createRunnerWithDefaultCommandArgsForCall []struct {
-		arg1 logger.Logger
-		arg2 bool
+		arg1 *cf.RunnerOptions
 	}
 	createRunnerWithDefaultCommandReturns struct {
 		result1 cf.Runner
@@ -38,18 +35,17 @@ type FakeRunnerFactory struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeRunnerFactory) CreateRunner(arg1 cf.CFCommand, arg2 logger.Logger, arg3 bool) cf.Runner {
+func (fake *FakeRunnerFactory) CreateRunner(arg1 cf.CFCommand, arg2 *cf.RunnerOptions) cf.Runner {
 	fake.createRunnerMutex.Lock()
 	ret, specificReturn := fake.createRunnerReturnsOnCall[len(fake.createRunnerArgsForCall)]
 	fake.createRunnerArgsForCall = append(fake.createRunnerArgsForCall, struct {
 		arg1 cf.CFCommand
-		arg2 logger.Logger
-		arg3 bool
-	}{arg1, arg2, arg3})
-	fake.recordInvocation("CreateRunner", []interface{}{arg1, arg2, arg3})
+		arg2 *cf.RunnerOptions
+	}{arg1, arg2})
+	fake.recordInvocation("CreateRunner", []interface{}{arg1, arg2})
 	fake.createRunnerMutex.Unlock()
 	if fake.CreateRunnerStub != nil {
-		return fake.CreateRunnerStub(arg1, arg2, arg3)
+		return fake.CreateRunnerStub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
@@ -64,17 +60,17 @@ func (fake *FakeRunnerFactory) CreateRunnerCallCount() int {
 	return len(fake.createRunnerArgsForCall)
 }
 
-func (fake *FakeRunnerFactory) CreateRunnerCalls(stub func(cf.CFCommand, logger.Logger, bool) cf.Runner) {
+func (fake *FakeRunnerFactory) CreateRunnerCalls(stub func(cf.CFCommand, *cf.RunnerOptions) cf.Runner) {
 	fake.createRunnerMutex.Lock()
 	defer fake.createRunnerMutex.Unlock()
 	fake.CreateRunnerStub = stub
 }
 
-func (fake *FakeRunnerFactory) CreateRunnerArgsForCall(i int) (cf.CFCommand, logger.Logger, bool) {
+func (fake *FakeRunnerFactory) CreateRunnerArgsForCall(i int) (cf.CFCommand, *cf.RunnerOptions) {
 	fake.createRunnerMutex.RLock()
 	defer fake.createRunnerMutex.RUnlock()
 	argsForCall := fake.createRunnerArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+	return argsForCall.arg1, argsForCall.arg2
 }
 
 func (fake *FakeRunnerFactory) CreateRunnerReturns(result1 cf.Runner) {
@@ -100,17 +96,16 @@ func (fake *FakeRunnerFactory) CreateRunnerReturnsOnCall(i int, result1 cf.Runne
 	}{result1}
 }
 
-func (fake *FakeRunnerFactory) CreateRunnerWithDefaultCommand(arg1 logger.Logger, arg2 bool) cf.Runner {
+func (fake *FakeRunnerFactory) CreateRunnerWithDefaultCommand(arg1 *cf.RunnerOptions) cf.Runner {
 	fake.createRunnerWithDefaultCommandMutex.Lock()
 	ret, specificReturn := fake.createRunnerWithDefaultCommandReturnsOnCall[len(fake.createRunnerWithDefaultCommandArgsForCall)]
 	fake.createRunnerWithDefaultCommandArgsForCall = append(fake.createRunnerWithDefaultCommandArgsForCall, struct {
-		arg1 logger.Logger
-		arg2 bool
-	}{arg1, arg2})
-	fake.recordInvocation("CreateRunnerWithDefaultCommand", []interface{}{arg1, arg2})
+		arg1 *cf.RunnerOptions
+	}{arg1})
+	fake.recordInvocation("CreateRunnerWithDefaultCommand", []interface{}{arg1})
 	fake.createRunnerWithDefaultCommandMutex.Unlock()
 	if fake.CreateRunnerWithDefaultCommandStub != nil {
-		return fake.CreateRunnerWithDefaultCommandStub(arg1, arg2)
+		return fake.CreateRunnerWithDefaultCommandStub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
@@ -125,17 +120,17 @@ func (fake *FakeRunnerFactory) CreateRunnerWithDefaultCommandCallCount() int {
 	return len(fake.createRunnerWithDefaultCommandArgsForCall)
 }
 
-func (fake *FakeRunnerFactory) CreateRunnerWithDefaultCommandCalls(stub func(logger.Logger, bool) cf.Runner) {
+func (fake *FakeRunnerFactory) CreateRunnerWithDefaultCommandCalls(stub func(*cf.RunnerOptions) cf.Runner) {
 	fake.createRunnerWithDefaultCommandMutex.Lock()
 	defer fake.createRunnerWithDefaultCommandMutex.Unlock()
 	fake.CreateRunnerWithDefaultCommandStub = stub
 }
 
-func (fake *FakeRunnerFactory) CreateRunnerWithDefaultCommandArgsForCall(i int) (logger.Logger, bool) {
+func (fake *FakeRunnerFactory) CreateRunnerWithDefaultCommandArgsForCall(i int) *cf.RunnerOptions {
 	fake.createRunnerWithDefaultCommandMutex.RLock()
 	defer fake.createRunnerWithDefaultCommandMutex.RUnlock()
 	argsForCall := fake.createRunnerWithDefaultCommandArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2
+	return argsForCall.arg1
 }
 
 func (fake *FakeRunnerFactory) CreateRunnerWithDefaultCommandReturns(result1 cf.Runner) {

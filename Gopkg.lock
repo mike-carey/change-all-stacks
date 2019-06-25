@@ -42,6 +42,14 @@
   version = "v1.3.1"
 
 [[projects]]
+  digest = "1:ebdeb808fe6861df1eaa262006a879bdbed826dd51c343bd5e681045e194997c"
+  name = "github.com/google/logger"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "7047ffcb7339f3f59be32de74a92217cb17cb40c"
+  version = "v1.0.1"
+
+[[projects]]
   digest = "1:a1038ef593beb4771c8f0f9c26e8b00410acd800af5c6864651d9bf160ea1813"
   name = "github.com/hpcloud/tail"
   packages = [
@@ -147,9 +155,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:d4488b7ca589840d020983978f9f139b89872b90d8a6d725de2fcac6c9448273"
+  digest = "1:286f6554249263531d9ba6555cd84f8807b361218a1696a273e2d25f61e72c0b"
   name = "golang.org/x/sys"
-  packages = ["unix"]
+  packages = [
+    "unix",
+    "windows",
+    "windows/registry",
+    "windows/svc/eventlog",
+  ]
   pruneopts = "UT"
   revision = "c5567b49c5d04a5f83870795b8c0e2df43a8ce32"
 
@@ -228,6 +241,7 @@
   input-imports = [
     "github.com/cheekybits/genny/generic",
     "github.com/cloudfoundry-community/go-cfclient",
+    "github.com/google/logger",
     "github.com/jessevdk/go-flags",
     "github.com/onsi/ginkgo",
     "github.com/onsi/gomega",

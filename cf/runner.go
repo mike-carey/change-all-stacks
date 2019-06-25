@@ -15,7 +15,13 @@ const (
 	InstallPluginCmd = "install-plugin"
 
 	RedactedString = "<REDACTED>"
+
+	DefaultDryRun = false
 )
+
+type RunnerOptions struct {
+	DryRun bool
+}
 
 type Redact string
 
@@ -28,21 +34,16 @@ type Runner interface {
 	ChangeStack(app string, stack string) error
 }
 
-func NewRunnerWithDefaultCommand(logger logger.Logger, dryrun bool) Runner {
+func NewRunnerWithDefaultCommand(opts *RunnerOptions) Runner {
 	home := NewTempCFHome("")
 
-	return &runner{
-		command: NewDefaultCFCommand(home),
-		logger: logger,
-		dryrun: dryrun,
-	}
+	return NewRunner(NewDefaultCFCommand(home), opts)
 }
 
-func NewRunner(command CFCommand, logger logger.Logger, dryrun bool) Runner {
+func NewRunner(command CFCommand, opts *RunnerOptions) Runner {
 	return &runner{
 		command: command,
-		logger: logger,
-		dryrun: dryrun,
+		dryrun: opts.DryRun,
 	}
 }
 
@@ -50,7 +51,6 @@ type runner struct {
 	Name string
 	home CFHome
 	command CFCommand
-	logger logger.Logger
 	dryrun bool
 }
 
@@ -74,10 +74,10 @@ func (r *runner) run(args ...interface{}) error {
 	if r.dryrun {
 		str, err := r.command.String(printArgs...)
 		if err == nil {
-			r.logger.Infof(str)
+			fmt.Println(str)
 		}
 	} else {
-		r.logger.Debugf("Running cf command: %s", strings.Join(printArgs, " "))
+		logger.Debugf("Running cf command: %s", strings.Join(printArgs, " "))
 		err = r.command.Execute(runArgs...)
 	}
 

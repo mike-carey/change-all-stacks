@@ -9,7 +9,6 @@ import (
 	. "github.com/mike-carey/change-all-stacks/cf"
 
 	fakes "github.com/mike-carey/change-all-stacks/cf/fakes"
-	lfakes "github.com/mike-carey/change-all-stacks/logger/fakes"
 
 )
 
@@ -17,19 +16,21 @@ var _ = Describe("Runner", func() {
 
 	var (
 		fakeCommand *fakes.FakeCFCommand
-		fakeLogger *lfakes.FakeLogger
 		runner Runner
+		opts *RunnerOptions
 	)
 
 	BeforeEach(func() {
 		fakeCommand = new(fakes.FakeCFCommand)
-		fakeLogger = new(lfakes.FakeLogger)
 	})
 
 	for active, cmd := range map[string]string{"enabled": "String", "disabled": "Execute"} {
 		Context(fmt.Sprintf("Dry Run %s", active), func() {
 				BeforeEach(func() {
-					runner = NewRunner(fakeCommand, fakeLogger, active == "enabled")
+					opts = &RunnerOptions{
+						DryRun: active == "enabled",
+					}
+					runner = NewRunner(fakeCommand, opts)
 				})
 
 				It(fmt.Sprintf("Should run the %s method for the api command", cmd), func() {
