@@ -21,6 +21,7 @@ var _ = Describe("QueryService", func() {
 		apps []cfclient.App
 		orgs []cfclient.Org
 		spaces []cfclient.Space
+		stacks []cfclient.Stack
 
 		queryService QueryService
 	)
@@ -33,26 +34,31 @@ var _ = Describe("QueryService", func() {
 				Guid: "app-1",
 				Name: "app-1",
 				SpaceGuid: "space-1",
+				StackGuid: "stack-1",
 			},
 			cfclient.App{
 				Guid: "app-2",
 				Name: "app-2",
 				SpaceGuid: "space-1",
+				StackGuid: "stack-2",
 			},
 			cfclient.App{
 				Guid: "app-3",
 				Name: "app-3",
 				SpaceGuid: "space-2",
+				StackGuid: "stack-2",
 			},
 			cfclient.App{
 				Guid: "app-4",
 				Name: "app-4",
 				SpaceGuid: "space-3",
+				StackGuid: "stack-3",
 			},
 			cfclient.App{
 				Guid: "app-5",
 				Name: "app-5",
 				SpaceGuid: "space-4",
+				StackGuid: "stack-1",
 			},
 		}
 
@@ -94,9 +100,25 @@ var _ = Describe("QueryService", func() {
 			},
 		}
 
+		stacks = []cfclient.Stack{
+			cfclient.Stack{
+				Guid: "stack-1",
+				Name: "stack-1",
+			},
+			cfclient.Stack{
+				Guid: "stack-2",
+				Name: "stack-2",
+			},
+			cfclient.Stack{
+				Guid: "stack-3",
+				Name: "stack-3",
+			},
+		}
+
 		fakeInquisitor.GetAllAppsReturns(apps, nil)
 		fakeInquisitor.GetAllOrgsReturns(orgs, nil)
 		fakeInquisitor.GetAllSpacesReturns(spaces, nil)
+		fakeInquisitor.GetAllStacksReturns(stacks, nil)
 
 		fakeInquisitor.GetAppByGuidStub = func(appGuid string) (cfclient.App, error) {
 			for _, app := range apps {
@@ -124,6 +146,15 @@ var _ = Describe("QueryService", func() {
 			}
 
 			return cfclient.Space{}, fmt.Errorf("Could not find space with guid: %s", spaceGuid)
+		}
+		fakeInquisitor.GetStackByGuidStub = func(stackGuid string) (cfclient.Stack, error) {
+			for _, stack := range stacks {
+				if stack.Guid == stackGuid {
+					return stack, nil
+				}
+			}
+
+			return cfclient.Stack{}, fmt.Errorf("Could not find stack with guid: %s", stackGuid)
 		}
 
 		fakeInquisitor.GetAppByNameStub = func(appName string) (cfclient.App, error) {
@@ -153,9 +184,19 @@ var _ = Describe("QueryService", func() {
 
 			return cfclient.Space{}, fmt.Errorf("Could not find space with name: %s", spaceName)
 		}
+		fakeInquisitor.GetStackByNameStub = func(stackName string) (cfclient.Stack, error) {
+			for _, stack := range stacks {
+				if stack.Name == stackName {
+					return stack, nil
+				}
+			}
+
+			return cfclient.Stack{}, fmt.Errorf("Could not find stack with name: %s", stackName)
+		}
 	})
 
 	Describe("GetAllAppsWithinOrgs", func() {
+
 		It("Should find all apps", func() {
 			a, e := queryService.GetAllAppsWithinOrgs()
 
@@ -169,6 +210,18 @@ var _ = Describe("QueryService", func() {
 			Expect(e).To(BeNil())
 			Expect(a).Should(ConsistOf(apps[0:4]))
 		})
+
+	})
+
+	Describe("FilterAppsByStackName", func() {
+
+		It("Should filter out apps without a certain stack", func() {
+			a, e := queryService.FilterAppsByStackName(apps, stacks[0].Name)
+
+			Expect(e).To(BeNil())
+			Expect(a).Should(ConsistOf(apps[0], apps[4]))
+		})
+
 	})
 
 })

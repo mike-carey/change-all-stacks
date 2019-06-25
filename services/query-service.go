@@ -10,6 +10,7 @@ import (
 //go:generate counterfeiter -o fakes/fake_query_service QueryService
 type QueryService interface {
 	GetAllAppsWithinOrgs(orgNames ...string) ([]cfclient.App, error)
+	FilterAppsByStackName(apps []cfclient.App, stackName string) ([]cfclient.App, error)
 }
 
 func NewQueryService(inquisitor query.Inquisitor) QueryService {
@@ -68,4 +69,26 @@ func (s *queryService) GetAllAppsWithinOrgs(orgNames ...string) ([]cfclient.App,
 	}
 
 	return apps, nil
+}
+
+func (s *queryService) FilterAppsByStackName(apps []cfclient.App, stackName string) ([]cfclient.App, error) {
+	logger.Debugf("Grabbing the stack by name: %s", stackName)
+	stack, err := s.inquisitor.GetStackByName(stackName)
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Debugf("Filtering out apps with stack(guid:%s, name:%s)", stack.Guid, stack.Name)
+	apps, err = query.AppFilterBy(apps, func (app cfclient.App) (bool, error) {
+		match := app.StackGuid == stack.Guid
+		if match {
+			logger.Debugf("App(%s) has stack(%s)", app.Name, stack.Name)
+		} else {
+			logger.Debugf("App(%s) does not have stack(%s)", app.Name, stack.Name)
+		}
+
+		return match, nil
+	})
+
+	return apps, err
 }
