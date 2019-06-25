@@ -6,6 +6,7 @@ import (
 	"github.com/cloudfoundry-community/go-cfclient"
 )
 
+//go:generate counterfeiter -o fakes/fake_inquisitor.go Inquisitor
 type Inquisitor interface {
 	GetAllApps() ([]cfclient.App, error)
 	GetAppByGuid(appGuid string) (cfclient.App, error)

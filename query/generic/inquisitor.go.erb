@@ -19,6 +19,7 @@ end
 
  %>
 
+//go:generate counterfeiter -o fakes/fake_inquisitor.go Inquisitor
 type Inquisitor interface {
 <% types.each do |type, klass| %>
 	GetAll<%= klass %>s() ([]cfclient.<%= klass %>, error)
