@@ -37,10 +37,6 @@
   # version = "1.4.0"
   branch = "master"
 
-[[constraint]]
-  branch = "master"
-  name = "github.com/mike-carey/cfquery"
-
 [prune]
   go-tests = true
   unused-packages = true

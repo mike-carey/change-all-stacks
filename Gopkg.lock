@@ -42,14 +42,6 @@
   version = "v1.3.1"
 
 [[projects]]
-  digest = "1:ebdeb808fe6861df1eaa262006a879bdbed826dd51c343bd5e681045e194997c"
-  name = "github.com/google/logger"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "7047ffcb7339f3f59be32de74a92217cb17cb40c"
-  version = "v1.0.1"
-
-[[projects]]
   digest = "1:a1038ef593beb4771c8f0f9c26e8b00410acd800af5c6864651d9bf160ea1813"
   name = "github.com/hpcloud/tail"
   packages = [
@@ -70,17 +62,6 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "c0795c8afcf41dd1d786bebce68636c199b3bb45"
-
-[[projects]]
-  branch = "master"
-  digest = "1:d74c65f2613221791c9ac245521ea031477361b0fc5d218a51eba9c1bf78940b"
-  name = "github.com/mike-carey/cfquery"
-  packages = [
-    "config",
-    "logger",
-  ]
-  pruneopts = "UT"
-  revision = "5e2c4aac9bd0dfb33e0431e254ba5952b37c737f"
 
 [[projects]]
   digest = "1:e9c3bb68a6c9470302b8046d4647e0612a2ea6037b9c6a47de60c0a90db504f8"
@@ -166,14 +147,9 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:286f6554249263531d9ba6555cd84f8807b361218a1696a273e2d25f61e72c0b"
+  digest = "1:d4488b7ca589840d020983978f9f139b89872b90d8a6d725de2fcac6c9448273"
   name = "golang.org/x/sys"
-  packages = [
-    "unix",
-    "windows",
-    "windows/registry",
-    "windows/svc/eventlog",
-  ]
+  packages = ["unix"]
   pruneopts = "UT"
   revision = "c5567b49c5d04a5f83870795b8c0e2df43a8ce32"
 
@@ -253,8 +229,6 @@
     "github.com/cheekybits/genny/generic",
     "github.com/cloudfoundry-community/go-cfclient",
     "github.com/jessevdk/go-flags",
-    "github.com/mike-carey/cfquery/config",
-    "github.com/mike-carey/cfquery/logger",
     "github.com/onsi/ginkgo",
     "github.com/onsi/gomega",
     "github.com/pkg/errors",

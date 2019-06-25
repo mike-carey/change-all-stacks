@@ -16,7 +16,6 @@ func ItemGroupBy(items []cfclient.Item, getKey func(cfclient.Item) (string, erro
 	for _, item := range items {
 		key, err := getKey(item)
 		if err != nil {
-			logger.Errorf("Could not get key from item: %v", item)
 			return pool, errors.Wrap(err, "Could not get key for item")
 		}
 

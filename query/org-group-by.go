@@ -6,7 +6,6 @@ package query
 
 import (
 	cfclient "github.com/cloudfoundry-community/go-cfclient"
-	"github.com/mike-carey/cfquery/logger"
 	"github.com/pkg/errors"
 )
 
@@ -16,7 +15,6 @@ func OrgGroupBy(items []cfclient.Org, getKey func(cfclient.Org) (string, error))
 	for _, item := range items {
 		key, err := getKey(item)
 		if err != nil {
-			logger.Errorf("Could not get key from item: %v", item)
 			return pool, errors.Wrap(err, "Could not get key for item")
 		}
 

@@ -7,7 +7,7 @@ import (
 
 	cfclient "github.com/cloudfoundry-community/go-cfclient"
 
-	"github.com/mike-carey/cfquery/config"
+	"github.com/mike-carey/change-all-stacks/config"
 	"github.com/mike-carey/change-all-stacks/data"
 )
 
