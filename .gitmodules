@@ -4,6 +4,7 @@
 [submodule "cicd-helpers"]
 	path = .lib/cicd-helpers
 	url = https://github.com/mike-carey/cicd-helpers.git
+	branch = dist/v0.1
 [submodule "bats-print"]
 	path = .lib/bats-print
 	url = https://github.com/mike-carey/bats-print.git
