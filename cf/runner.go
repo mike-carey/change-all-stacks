@@ -2,109 +2,78 @@ package cf
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/mike-carey/change-all-stacks/logger"
+	"github.com/cloudfoundry-community/go-cfclient"
 )
-
-const (
-	ApiCmd = "api"
-	AuthCmd = "auth"
-	TargetCmd = "target"
-	ChangeStackCmd = "change-stack"
-	InstallPluginCmd = "install-plugin"
-
-	RedactedString = "<REDACTED>"
-
-	DefaultDryRun = false
-)
-
-type RunnerOptions struct {
-	DryRun bool
-}
-
-type Redact string
 
 //go:generate counterfeiter -o fakes/fake_runner.go Runner
 type Runner interface {
-	Api(apiAddress string, skipSSlValidation bool) error
-	Auth(username string, password string) error
-	Target(org string, space string) error
-	InstallPlugin(plugin string) error
-	ChangeStack(app string, stack string) error
-}
-
-func NewRunnerWithDefaultCommand(opts *RunnerOptions) Runner {
-	home := NewTempCFHome("")
-
-	return NewRunner(NewDefaultCFCommand(home), opts)
-}
-
-func NewRunner(command CFCommand, opts *RunnerOptions) Runner {
-	return &runner{
-		command: command,
-		dryrun: opts.DryRun,
-	}
+	Setup(c *cfclient.Config, pluginPath string, org string, space string) error
+	Run(appName string, stackName string) error
 }
 
 type runner struct {
-	Name string
-	home CFHome
-	command CFCommand
-	dryrun bool
+	executor Executor
+	isSetup bool
 }
 
-func (r *runner) run(args ...interface{}) error {
-	printArgs := make([]string, len(args))
-	runArgs := make([]string, len(args))
-
-	for i, arg := range args {
-		if str, ok := arg.(string); ok {
-			runArgs[i] = str
-			printArgs[i] = str
-		} else if red, ok := arg.(Redact); ok {
-			runArgs[i] = string(red)
-			printArgs[i] = RedactedString
-		} else {
-			return fmt.Errorf("Unknown type provided to run command")
-		}
+func NewRunner(executor Executor) Runner {
+	return &runner{
+		executor: executor,
+		isSetup: false,
 	}
+}
 
+func (r *runner) Setup(c *cfclient.Config, pluginPath string, org string, space string) error {
 	var err error
-	if r.dryrun {
-		str, err := r.command.String(printArgs...)
-		if err == nil {
-			fmt.Println(str)
-		}
-	} else {
-		logger.Debugf("Running cf command: %s", strings.Join(printArgs, " "))
-		err = r.command.Execute(runArgs...)
+
+	withOrWithout := "with"
+	if c.SkipSslValidation {
+		withOrWithout = "without"
 	}
 
-	return err
-}
-
-func (r *runner) Api(apiAddress string, skipSslValidation bool) error {
-	ssv := ""
-	if skipSslValidation {
-		ssv = "--skip-ssl-validation"
+	logger.Debugf("Setting api endpoint to '%s' %s ssl validation", c.ApiAddress, withOrWithout)
+	err = r.executor.Api(c.ApiAddress, c.SkipSslValidation)
+	if err != nil {
+		return err
 	}
 
-	return r.run(ApiCmd, apiAddress, ssv)
+	logger.Debugf("Authorizing via %s:<REDACTED>", c.Username)
+	err = r.executor.Auth(c.Username, c.Password)
+	if err != nil {
+		return err
+	}
+
+	logger.Debugf("Targeting org: %s and space: %s", org, space)
+	err = r.executor.Target(org, space)
+	if err != nil {
+		return err
+	}
+
+	logger.Debugf("Installing plugin: %s", pluginPath)
+	err = r.executor.InstallPlugin(pluginPath)
+	if err != nil {
+		return err
+	}
+
+	r.isSetup = true
+
+	return nil
+
 }
 
-func (r *runner) Auth(username string, password string) error {
-	return r.run(AuthCmd, username, Redact(password))
-}
+func (r *runner) Run(appName string, stackName string) error {
+	if !r.isSetup {
+		return fmt.Errorf("Runner is not setup!")
+	}
 
-func (r *runner) Target(org string, space string) error {
-	return r.run(TargetCmd, "-o", org, "-s", space)
-}
+	logger.Debugf("Changing %s's stack to %s", appName, stackName)
+	err := r.executor.ChangeStack(appName, stackName)
+	if err != nil {
+		logger.Debugf("Failed to change %s's stack to %s.  Reason: %v", err)
+		return err
+	}
 
-func (r *runner) InstallPlugin(plugin string) error {
-	return r.run(InstallPluginCmd, plugin, "-f")
-}
-
-func (r *runner) ChangeStack(app string, stack string) error {
-	return r.run(ChangeStackCmd, app, stack)
+	logger.Debugf("Successfully changed %s's stack to %s")
+	return nil
 }

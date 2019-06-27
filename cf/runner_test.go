@@ -1,101 +1,97 @@
 package cf_test
 
 import (
-	"fmt"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	. "github.com/mike-carey/change-all-stacks/cf"
 
-	fakes "github.com/mike-carey/change-all-stacks/cf/fakes"
+	cfclient "github.com/cloudfoundry-community/go-cfclient"
 
+	fakes "github.com/mike-carey/change-all-stacks/cf/fakes"
 )
 
 var _ = Describe("Runner", func() {
 
 	var (
-		fakeCommand *fakes.FakeCFCommand
+		apiAddress = "ApiAddress"
+		username = "Username"
+		password = "Password"
+		skipSslValidation = true
+		pluginPath = "PluginPath"
+		org = "org"
+		space = "space"
+		appName = "app"
+		stackName = "stack"
+
+		config *cfclient.Config
+		fakeExecutor *fakes.FakeExecutor
 		runner Runner
-		opts *RunnerOptions
 	)
 
 	BeforeEach(func() {
-		fakeCommand = new(fakes.FakeCFCommand)
+		config = &cfclient.Config{
+			ApiAddress: apiAddress,
+			Username: username,
+			Password: password,
+			SkipSslValidation: skipSslValidation,
+		}
+
+		fakeExecutor = new(fakes.FakeExecutor)
+
+		runner = NewRunner(fakeExecutor)
 	})
 
-	for active, cmd := range map[string]string{"enabled": "String", "disabled": "Execute"} {
-		Context(fmt.Sprintf("Dry Run %s", active), func() {
-				BeforeEach(func() {
-					opts = &RunnerOptions{
-						DryRun: active == "enabled",
-					}
-					runner = NewRunner(fakeCommand, opts)
-				})
+	It("Should Setup the suite", func() {
+		err := runner.Setup(config, pluginPath, org, space)
 
-				It(fmt.Sprintf("Should run the %s method for the api command", cmd), func() {
-					By("With ssl validation")
-					err := runner.Api("api-address", false)
-					Expect(err).To(BeNil())
+		i := fakeExecutor.Invocations()
 
-					inv := fakeCommand.Invocations()[cmd]
-					Expect(len(inv)).To(Equal(1))
-					Expect(inv[0][0]).To(Equal([]string{"api", "api-address", ""}))
+		Expect(err).To(BeNil())
 
-					By("Without ssl validation")
-					err = runner.Api("api-address", true)
-					Expect(err).To(BeNil())
+		Expect(i).To(HaveKey("Api"))
+		Expect(i["Api"]).To(HaveLen(1))
+		Expect(i["Api"][0][0]).To(Equal(apiAddress))
+		Expect(i["Api"][0][1]).To(Equal(skipSslValidation))
 
-					inv = fakeCommand.Invocations()[cmd]
-					Expect(len(inv)).To(Equal(2))
-					Expect(inv[1][0]).To(Equal([]string{"api", "api-address", "--skip-ssl-validation"}))
-				})
+		Expect(i).To(HaveKey("Auth"))
+		Expect(i["Auth"]).To(HaveLen(1))
+		Expect(i["Auth"][0][0]).To(Equal(username))
+		Expect(i["Auth"][0][1]).To(Equal(password))
 
-				It(fmt.Sprintf("Should run the %s method for the auth command", cmd), func() {
-					err := runner.Auth("username", "password")
-					Expect(err).To(BeNil())
+		Expect(i).To(HaveKey("Target"))
+		Expect(i["Target"]).To(HaveLen(1))
+		Expect(i["Target"][0][0]).To(Equal(org))
+		Expect(i["Target"][0][1]).To(Equal(space))
 
-					inv := fakeCommand.Invocations()[cmd]
-					Expect(len(inv)).To(Equal(1))
+		Expect(i).To(HaveKey("InstallPlugin"))
+		Expect(i["InstallPlugin"]).To(HaveLen(1))
+		Expect(i["InstallPlugin"][0][0]).To(Equal(pluginPath))
+	})
 
-					expectedPassword := "password"
-					if cmd == "String" {
-						expectedPassword = RedactedString
-					}
+	It("Should Run the suite", func() {
+		// We need to setup first
+		err := runner.Setup(config, pluginPath, org, space)
 
-					Expect(inv[0][0]).To(Equal([]string{"auth", "username", expectedPassword}))
-				})
+		Expect(err).To(BeNil())
+		Expect(fakeExecutor.Invocations()).NotTo(HaveKey("ChangeStack"))
 
-				It(fmt.Sprintf("Should run the %s method for the target command", cmd), func() {
-					err := runner.Target("org", "space")
-					Expect(err).To(BeNil())
+		err = runner.Run(appName, stackName)
 
-					inv := fakeCommand.Invocations()[cmd]
-					Expect(len(inv)).To(Equal(1))
+		i := fakeExecutor.Invocations()
 
-					Expect(inv[0][0]).To(Equal([]string{"target", "-o", "org", "-s", "space"}))
-				})
+		Expect(err).To(BeNil())
 
-				It(fmt.Sprintf("Should run the %s method for the install-plugin command", cmd), func() {
-					err := runner.InstallPlugin("plugin")
-					Expect(err).To(BeNil())
+		Expect(i).To(HaveKey("ChangeStack"))
+		Expect(i["ChangeStack"]).To(HaveLen(1))
+		Expect(i["ChangeStack"][0][0]).To(Equal(appName))
+		Expect(i["ChangeStack"][0][1]).To(Equal(stackName))
+	})
 
-					inv := fakeCommand.Invocations()[cmd]
-					Expect(len(inv)).To(Equal(1))
+	It("Should throw an error if not setup and run is called", func() {
+		err := runner.Run(appName, stackName)
 
-					Expect(inv[0][0]).To(Equal([]string{"install-plugin", "plugin", "-f"}))
-				})
-
-				It(fmt.Sprintf("Should run the %s method for the change-stack command", cmd), func() {
-					err := runner.ChangeStack("app", "stack")
-					Expect(err).To(BeNil())
-
-					inv := fakeCommand.Invocations()[cmd]
-					Expect(len(inv)).To(Equal(1))
-
-					Expect(inv[0][0]).To(Equal([]string{"change-stack", "app", "stack"}))
-				})
-		})
-	}
+		Expect(err).NotTo(BeNil())
+	})
 
 })
