@@ -2,7 +2,6 @@ package services
 
 import (
 	"sync"
-	"io/ioutil"
 
 	"github.com/mike-carey/change-all-stacks/logger"
 	"github.com/mike-carey/change-all-stacks/query"
@@ -50,7 +49,7 @@ func (i *inquisitorService) GetInquisitor(config *cfclient.Config) (query.Inquis
 		}
 
 		// TODO: Replace ioutil.Discard with logger
-		inquisitor, err := query.NewInquisitor(cli, ioutil.Discard), nil
+		inquisitor, err := query.NewInquisitor(cli), nil
 		if err != nil {
 			return inquisitor, err
 		}

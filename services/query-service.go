@@ -1,19 +1,19 @@
 package services
 
 import (
-	"fmt"
-
+	"github.com/mike-carey/change-all-stacks/data"
 	"github.com/mike-carey/change-all-stacks/logger"
 	"github.com/mike-carey/change-all-stacks/query"
 
 	cfclient "github.com/cloudfoundry-community/go-cfclient"
 )
 
-//go:generate counterfeiter -o fakes/fake_query_service QueryService
+//go:generate counterfeiter -o fakes/fake_query_service.go QueryService
 type QueryService interface {
 	GetAllAppsWithinOrgs(orgNames ...string) ([]cfclient.App, error)
 	FilterAppsByStackName(apps []cfclient.App, stackName string) ([]cfclient.App, error)
 	FilterAppsByBuildpackName(apps []cfclient.App, buildpackName string) ([]cfclient.App, error)
+	GetAppData(foundationName string, apps []cfclient.App) (data.Data, error)
 }
 
 func NewQueryService(inquisitor query.Inquisitor) QueryService {
@@ -97,22 +97,23 @@ func (s *queryService) FilterAppsByStackName(apps []cfclient.App, stackName stri
 }
 
 func (s *queryService) FilterAppsByBuildpackName(apps []cfclient.App, buildpackName string) ([]cfclient.App, error) {
-	logger.Debugf("Grabbing the buildpack by name: %s", buildpackName)
-	buildpack, err := s.inquisitor.GetBuildpackByName(buildpackName)
-	if err != nil {
-		if _, ok := err.(*query.NotFoundError); !ok {
-			logger.Debugf("Error(%s) could not be casted to NotFoundError, throwing it up the stack", err)
-			return nil, err
-		} else {
-			logger.Warningf("Checking against a buildpack which no longer exists: (%s)", buildpackName)
-		}
-	}
 
-	logger.Debugf("Filtering out apps with buildpack(guid:%s, name:%s)", buildpack.Guid, buildpack.Name)
-	apps, err = query.AppFilterBy(apps, func (app cfclient.App) (bool, error) {
+	// logger.Debugf("Filtering out apps with buildpack(guid:%s, name:%s)", buildpack.Guid, buildpack.Name)
+	logger.Debugf("Filtering out apps with buildpack(name:%s)", buildpackName)
+	apps, err := query.AppFilterBy(apps, func (app cfclient.App) (bool, error) {
 		if app.Buildpack != "" {
 			logger.Debugf("App(%s) explicitly specified a buildpack(%s)", app.Name, app.Buildpack)
 			return app.Buildpack == buildpackName, nil
+		}
+
+		if app.DetectedBuildpackGuid != "" {
+			logger.Debugf("App(%s)'s buildpack was detected as a guid %s", app.Name, app.DetectedBuildpackGuid)
+			buildpack, err := s.inquisitor.GetBuildpackByGuid(app.DetectedBuildpackGuid)
+			if err != nil {
+				return false, err
+			}
+
+			return buildpackName == buildpack.Name, nil
 		}
 
 		if app.DetectedBuildpack != "" {
@@ -120,19 +121,31 @@ func (s *queryService) FilterAppsByBuildpackName(apps []cfclient.App, buildpackN
 			return app.DetectedBuildpack == buildpackName, nil
 		}
 
-		if app.DetectedBuildpackGuid != "" {
-			logger.Debugf("App(%s)'s buildpack was detected as a guid %s", app.Name, app.DetectedBuildpackGuid)
-			if buildpack.Guid != "" {
-				logger.Debugf("Buildpack by name %s was found and nowing checking guid's against each other", buildpackName)
-				return app.DetectedBuildpackGuid == buildpack.Guid, nil
-			}
+		logger.Warningf("Buildpack for app(%s) could not be determined", app.Name)
 
-			logger.Debugf("Unable to compare DetectedBuildpackGuid to nil assumes false")
-			return false, nil
-		}
-
-		return false, fmt.Errorf("Buildpack for app(%s) could not be determined", app.Name)
+		return false, nil
 	})
 
 	return apps, err
 }
+
+func (s *queryService) GetAppData(foundationName string, apps []cfclient.App) (data.Data, error) {
+	d := make(data.Data, len(apps))
+	for i, app := range apps {
+		space, err := s.inquisitor.GetSpaceByGuid(app.SpaceGuid)
+		if err != nil {
+			return nil, err
+		}
+
+		org, err := s.inquisitor.GetOrgByGuid(space.OrganizationGuid)
+		if err != nil {
+			return nil, err
+		}
+
+		d[i] = *data.NewDataEntry(foundationName, org, space, app, "", cfclient.User{})
+	}
+
+	return d, nil
+}
+
+var _ QueryService = &queryService{}

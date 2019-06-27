@@ -10,72 +10,91 @@ import (
 	"github.com/google/logger"
 )
 
+var debugMode bool = false
 var devMode *bool
 var instance *logger.Logger
 var once sync.Once
 
+const (
+	DevEnvVar = "DEVELOPMENT"
+	VerboseEnvVar = "VERBOSE"
+	DebugEnvVar = "DEBUG"
+)
+
 func GetInstance() *logger.Logger {
 	once.Do(func() {
-		if !isDevMode() {
-			panic("Cannot init unless in dev mode or Init called")
-		}
+		if instance == nil {
+			if !isDevMode() {
+				panic("Cannot init unless in dev mode or Init called")
+			}
 
-		Init(nil)
+			Init(nil, nil)
+		}
 	})
 
 	return instance
 }
 
+func getBoolEnvVar(name string) bool {
+	v := os.Getenv(name)
+	if v == "" {
+		v = "false"
+	}
+
+	d, err := strconv.ParseBool(v)
+	if err != nil {
+		panic(err)
+	}
+
+	return d
+
+}
+
+func isDebug() bool {
+	return debugMode
+}
+
 func isDevMode() bool {
 	if devMode == nil {
-		v := os.Getenv("DEVELOPMENT")
-		if v == "" {
-			v = "false"
-		}
-
-		d, err := strconv.ParseBool(v)
-		if err != nil {
-			panic(err)
-		}
-
+		d := getBoolEnvVar(DevEnvVar)
 		devMode = &d
 	}
 
 	return *devMode
 }
 
-func Init(verbose *bool) {
+func Init(verbose *bool, debug *bool) {
 	if isDevMode() {
-		v := getVerboseFromEnv()
-		verbose = &v
+		if verbose == nil {
+			v := getBoolEnvVar(VerboseEnvVar)
+			verbose = &v
+		}
+
+		if debug == nil {
+			d := getBoolEnvVar(DebugEnvVar)
+			debug = &d
+		}
 	}
+
+	if verbose == nil || debug == nil {
+		panic("Logger failed to initialize!")
+	}
+
+	debugMode = *debug
 
 	instance = logger.Init("", *verbose, false, ioutil.Discard)
 	logger.SetFlags(log.LstdFlags)
 }
 
-func getVerboseFromEnv() bool {
-	v := os.Getenv("CFQUERY_VERBOSE")
-	if v == "" {
-		v = "false"
-	}
-	verbose, err := strconv.ParseBool(v)
-	if err != nil {
-		panic(err)
-	}
-
-	return verbose
-}
-
 func Debug(msg string) {
-	if isDevMode() {
-		GetInstance().Info(msg)
+	if isDebug() {
+		GetInstance().Info("[DEBUG] " + msg)
 	}
 }
 
 func Debugf(msg string, args ...interface{}) {
-	if isDevMode() {
-		GetInstance().Infof(msg, args...)
+	if isDebug() {
+		GetInstance().Infof("[DEBUG] " + msg, args...)
 	}
 }
 

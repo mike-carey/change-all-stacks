@@ -28,23 +28,9 @@ func TDataMap(foundation string, org string, space string, app string, latestUpl
 	}
 }
 
-func FormatData(formatter Formatter, data Data) (string, error) {
-	d := make([]string, len(data))
-	for i, entry := range data {
-		s, e := formatter.Format(entry)
-		if e != nil {
-			return "", e
-		}
-
-		d[i] = s
-	}
-
-	return strings.Join(d, "\n"), nil
-}
-
 //go:generate counterfeiter -o fakes/fake_formatter.go Formatter
 type Formatter interface {
-	Format(entry DataEntry) (string, error)
+	Format(entry Data) (string, error)
 }
 
 type formatter struct {
@@ -61,6 +47,11 @@ func NewDefaultFormatter() Formatter {
 	return NewFormatter(DefaultFormat)
 }
 
-func (f *formatter) Format(entry DataEntry) (string, error) {
-	return Tsprintf(f.FormatString, TDataMap(entry.Foundation, entry.Org.Name, entry.Space.Name, entry.App.Name, "00/00/00 00:00:00", entry.LatestAuthor.Username)), nil
+func (f *formatter) Format(entries Data) (string, error) {
+	strs := make([]string, len(entries))
+	for i, entry := range entries {
+		strs[i] = Tsprintf(f.FormatString, TDataMap(entry.Foundation, entry.Org.Name, entry.Space.Name, entry.App.Name, "00/00/00 00:00:00", entry.LatestAuthor.Username))
+	}
+
+	return strings.Join(strs, "\n"), nil
 }

@@ -1,4 +1,4 @@
-package change
+package errors
 
 type ErrorStack struct {
 	message string
