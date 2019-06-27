@@ -1,8 +1,6 @@
 package query
 
 import (
-	"io"
-
 	"github.com/cloudfoundry-community/go-cfclient"
 )
 
@@ -31,7 +29,6 @@ type Inquisitor interface {
 
 type inquisitor struct {
 	client CFClient
-	logger io.Writer
 
 	appService *AppService
 
@@ -44,20 +41,19 @@ type inquisitor struct {
 	buildpackService *BuildpackService
 }
 
-func NewInquisitor(client CFClient, logger io.Writer) Inquisitor {
+func NewInquisitor(client CFClient) Inquisitor {
 	return &inquisitor{
 		client: client,
-		logger: logger,
 
-		appService: NewAppService(client, logger),
+		appService: NewAppService(client),
 
-		spaceService: NewSpaceService(client, logger),
+		spaceService: NewSpaceService(client),
 
-		stackService: NewStackService(client, logger),
+		stackService: NewStackService(client),
 
-		orgService: NewOrgService(client, logger),
+		orgService: NewOrgService(client),
 
-		buildpackService: NewBuildpackService(client, logger),
+		buildpackService: NewBuildpackService(client),
 	}
 }
 

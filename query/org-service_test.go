@@ -24,7 +24,7 @@ var _ = Describe(fmt.Sprintf("%sService", getOrgString()), func() {
 	BeforeEach(func() {
 		storage = GetStorage()
 		fakeClient = GetFakeClient(storage)
-		service = NewOrgService(fakeClient, GinkgoWriter)
+		service = NewOrgService(fakeClient)
 	})
 
 	It(fmt.Sprintf("Should get all %s", getOrgString()), func() {

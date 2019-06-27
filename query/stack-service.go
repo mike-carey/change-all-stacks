@@ -6,25 +6,23 @@ package query
 
 import (
 	"fmt"
-	"io"
 	"sync"
 
 	cfclient "github.com/cloudfoundry-community/go-cfclient"
+	"github.com/mike-carey/change-all-stacks/logger"
 )
 
 type StackService struct {
 	client      CFClient
-	logger      io.Writer
 	cacheList   []cfclient.Stack
 	cacheMap    map[string]cfclient.Stack
 	mutex       *sync.Mutex
 	fullyLoaded bool
 }
 
-func NewStackService(client CFClient, logger io.Writer) *StackService {
+func NewStackService(client CFClient) *StackService {
 	return &StackService{
 		client:      client,
-		logger:      logger,
 		cacheList:   make([]cfclient.Stack, 0),
 		cacheMap:    make(map[string]cfclient.Stack, 0),
 		mutex:       &sync.Mutex{},
@@ -32,43 +30,39 @@ func NewStackService(client CFClient, logger io.Writer) *StackService {
 	}
 }
 
-func (s *StackService) logf(msg string, args ...interface{}) {
-	s.logger.Write([]byte(fmt.Sprintf(msg+"\n", args...)))
-}
-
 func (s *StackService) lock() {
-	s.logf("Locking %T", s)
+	logger.Debugf("Locking %T", s)
 	s.mutex.Lock()
-	s.logf("Locked %T", s)
+	logger.Debugf("Locked %T", s)
 }
 
 func (s *StackService) unlock() {
-	s.logf("Unlocking %T", s)
+	logger.Debugf("Unlocking %T", s)
 	s.mutex.Unlock()
-	s.logf("Unlocked %T", s)
+	logger.Debugf("Unlocked %T", s)
 }
 
 func (s *StackService) GetAllStacks() ([]cfclient.Stack, error) {
 	s.lock()
 
 	if !s.fullyLoaded {
-		s.logf("%T is not already fully loaded", s)
+		logger.Debugf("%T is not already fully loaded", s)
 		items, err := s.client.ListStacks()
 		if err != nil {
 			return nil, err
 		}
 
-		s.logf("Writing cache list for %T", s)
+		logger.Debugf("Writing cache list for %T", s)
 		s.cacheList = items
 
-		go func() {
+		go func(s *StackService, items []cfclient.Stack) {
 			defer s.unlock()
 
-			s.logf("Writing cache map for %T", s)
+			logger.Debugf("Writing cache map for %T", s)
 			for _, item := range items {
 				s.cacheMap[item.Guid] = item
 			}
-		}()
+		}(s, items)
 	} else {
 		defer s.unlock()
 	}
@@ -81,24 +75,24 @@ func (s *StackService) GetStackByGuid(guid string) (cfclient.Stack, error) {
 	//defer s.unlock()
 
 	if item, ok := s.cacheMap[guid]; ok {
-		s.logf("Found a cached %T with a guid of %s", item, guid)
+		logger.Debugf("Found a cached %T with a guid of %s", item, guid)
 		return item, nil
 	}
 
 	if s.fullyLoaded {
-		s.logf("%T is already fully loaded but did not find %s in cacheMap", s, guid)
+		logger.Debugf("%T is already fully loaded but did not find %s in cacheMap", s, guid)
 		item := cfclient.Stack{}
 		return item, NewNotFoundError(item, "guid", guid)
 	}
 
-	s.logf("Did not find cached %T and %T is not fully loaded, querying by guid: %s", cfclient.Stack{}, s, guid)
+	logger.Debugf("Did not find cached %T and %T is not fully loaded, querying by guid: %s", cfclient.Stack{}, s, guid)
 	s.unlock()
 	i, err := s.getStackByGuid(guid)
 	if err != nil {
 		return cfclient.Stack{}, nil
 	}
 
-	s.logf("Saving off a single %T to the cacheMap with guid: %s", i, i.Guid)
+	logger.Debugf("Saving off a single %T to the cacheMap with guid: %s", i, i.Guid)
 	s.cacheMap[i.Guid] = i
 	return i, nil
 }

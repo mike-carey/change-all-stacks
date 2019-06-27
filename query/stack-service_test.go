@@ -24,7 +24,7 @@ var _ = Describe(fmt.Sprintf("%sService", getStackString()), func() {
 	BeforeEach(func() {
 		storage = GetStorage()
 		fakeClient = GetFakeClient(storage)
-		service = NewStackService(fakeClient, GinkgoWriter)
+		service = NewStackService(fakeClient)
 	})
 
 	It(fmt.Sprintf("Should get all %s", getStackString()), func() {

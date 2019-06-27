@@ -1,8 +1,6 @@
 package generic
 
 import (
-	"io"
-
 	"github.com/cloudfoundry-community/go-cfclient"
 )
 
@@ -30,18 +28,16 @@ type Inquisitor interface {
 
 type inquisitor struct {
 	client CFClient
-	logger io.Writer
 <% types.each do |type, klass| %>
 	<%= type %>Service *<%= klass %>Service
 <% end %>
 }
 
-func NewInquisitor(client CFClient, logger io.Writer) Inquisitor {
+func NewInquisitor(client CFClient) Inquisitor {
 	return &inquisitor {
 		client: client,
-		logger: logger,
 <% types.each do |type, klass| %>
-		<%= type %>Service: New<%= klass %>Service(client, logger),
+		<%= type %>Service: New<%= klass %>Service(client),
 <% end %>
 	}
 }

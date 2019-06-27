@@ -2,8 +2,9 @@ package generic
 
 import (
 	"io"
-	"fmt"
 	"sync"
+
+	"github.com/mike-carey/change-all-stacks/logger"
 
 	"github.com/cloudfoundry-community/go-cfclient"
 
@@ -14,17 +15,15 @@ type Item generic.Type
 
 type ItemService struct {
 	client CFClient
-	logger io.Writer
 	cacheList []cfclient.Item
 	cacheMap map[string]cfclient.Item
 	mutex *sync.Mutex
 	fullyLoaded bool
 }
 
-func NewItemService(client CFClient, logger io.Writer) *ItemService {
+func NewItemService(client CFClient) *ItemService {
 	return &ItemService{
 		client: client,
-		logger: logger,
 		cacheList: make([]cfclient.Item, 0),
 		cacheMap: make(map[string]cfclient.Item, 0),
 		mutex: &sync.Mutex{},
@@ -32,43 +31,39 @@ func NewItemService(client CFClient, logger io.Writer) *ItemService {
 	}
 }
 
-func (s *ItemService) logf(msg string, args ...interface{}) {
-	s.logger.Write([]byte(fmt.Sprintf(msg + "\n", args...)))
-}
-
 func (s *ItemService) lock() {
-	s.logf("Locking %T", s)
+	logger.Debugf("Locking %T", s)
 	s.mutex.Lock()
-	s.logf("Locked %T", s)
+	logger.Debugf("Locked %T", s)
 }
 
 func (s *ItemService) unlock() {
-	s.logf("Unlocking %T", s)
+	logger.Debugf("Unlocking %T", s)
 	s.mutex.Unlock()
-	s.logf("Unlocked %T", s)
+	logger.Debugf("Unlocked %T", s)
 }
 
 func (s *ItemService) GetAllItems() ([]cfclient.Item, error) {
 	s.lock()
 
 	if !s.fullyLoaded {
-		s.logf("%T is not already fully loaded", s)
+		logger.Debugf("%T is not already fully loaded", s)
 		items, err := s.client.ListItems()
 		if err != nil {
 			return nil, err
 		}
 
-		s.logf("Writing cache list for %T", s)
+		logger.Debugf("Writing cache list for %T", s)
 		s.cacheList = items
 
-		go func() {
+		go func(s *ItemService, items []cfclient.Item) {
 			defer s.unlock()
 
-			s.logf("Writing cache map for %T", s)
+			logger.Debugf("Writing cache map for %T", s)
 			for _, item := range items {
 				s.cacheMap[item.Guid] = item
 			}
-		}()
+		}(s, items)
 	} else {
 		defer s.unlock()
 	}
@@ -81,23 +76,23 @@ func (s *ItemService) GetItemByGuid(guid string) (cfclient.Item, error) {
 	defer s.unlock()
 
 	if item, ok := s.cacheMap[guid]; ok {
-		s.logf("Found a cached %T with a guid of %s", item, guid)
+		logger.Debugf("Found a cached %T with a guid of %s", item, guid)
 		return item, nil
 	}
 
 	if s.fullyLoaded {
-		s.logf("%T is already fully loaded but did not find %s in cacheMap", s, guid)
+		logger.Debugf("%T is already fully loaded but did not find %s in cacheMap", s, guid)
 		item := cfclient.Item{}
 		return item, NewNotFoundError(item, "guid", guid)
 	}
 
-	s.logf("Did not find cached %T and %T is not fully loaded, querying by guid: %s", cfclient.Item{}, s, guid)
+	logger.Debugf("Did not find cached %T and %T is not fully loaded, querying by guid: %s", cfclient.Item{}, s, guid)
 	i, err := s.client.GetItemByGuid(guid)
 	if err != nil {
 		return cfclient.Item{}, nil
 	}
 
-	s.logf("Saving off a single %T to the cacheMap with guid: %s", i, i.Guid)
+	logger.Debugf("Saving off a single %T to the cacheMap with guid: %s", i, i.Guid)
 	s.cacheMap[i.Guid] = i
 	return i, nil
 }

@@ -5,26 +5,23 @@
 package query
 
 import (
-	"fmt"
-	"io"
 	"sync"
 
 	cfclient "github.com/cloudfoundry-community/go-cfclient"
+	"github.com/mike-carey/change-all-stacks/logger"
 )
 
 type BuildpackService struct {
 	client      CFClient
-	logger      io.Writer
 	cacheList   []cfclient.Buildpack
 	cacheMap    map[string]cfclient.Buildpack
 	mutex       *sync.Mutex
 	fullyLoaded bool
 }
 
-func NewBuildpackService(client CFClient, logger io.Writer) *BuildpackService {
+func NewBuildpackService(client CFClient) *BuildpackService {
 	return &BuildpackService{
 		client:      client,
-		logger:      logger,
 		cacheList:   make([]cfclient.Buildpack, 0),
 		cacheMap:    make(map[string]cfclient.Buildpack, 0),
 		mutex:       &sync.Mutex{},
@@ -32,43 +29,39 @@ func NewBuildpackService(client CFClient, logger io.Writer) *BuildpackService {
 	}
 }
 
-func (s *BuildpackService) logf(msg string, args ...interface{}) {
-	s.logger.Write([]byte(fmt.Sprintf(msg+"\n", args...)))
-}
-
 func (s *BuildpackService) lock() {
-	s.logf("Locking %T", s)
+	logger.Debugf("Locking %T", s)
 	s.mutex.Lock()
-	s.logf("Locked %T", s)
+	logger.Debugf("Locked %T", s)
 }
 
 func (s *BuildpackService) unlock() {
-	s.logf("Unlocking %T", s)
+	logger.Debugf("Unlocking %T", s)
 	s.mutex.Unlock()
-	s.logf("Unlocked %T", s)
+	logger.Debugf("Unlocked %T", s)
 }
 
 func (s *BuildpackService) GetAllBuildpacks() ([]cfclient.Buildpack, error) {
 	s.lock()
 
 	if !s.fullyLoaded {
-		s.logf("%T is not already fully loaded", s)
+		logger.Debugf("%T is not already fully loaded", s)
 		items, err := s.client.ListBuildpacks()
 		if err != nil {
 			return nil, err
 		}
 
-		s.logf("Writing cache list for %T", s)
+		logger.Debugf("Writing cache list for %T", s)
 		s.cacheList = items
 
-		go func() {
+		go func(s *BuildpackService, items []cfclient.Buildpack) {
 			defer s.unlock()
 
-			s.logf("Writing cache map for %T", s)
+			logger.Debugf("Writing cache map for %T", s)
 			for _, item := range items {
 				s.cacheMap[item.Guid] = item
 			}
-		}()
+		}(s, items)
 	} else {
 		defer s.unlock()
 	}
@@ -81,23 +74,23 @@ func (s *BuildpackService) GetBuildpackByGuid(guid string) (cfclient.Buildpack, 
 	defer s.unlock()
 
 	if item, ok := s.cacheMap[guid]; ok {
-		s.logf("Found a cached %T with a guid of %s", item, guid)
+		logger.Debugf("Found a cached %T with a guid of %s", item, guid)
 		return item, nil
 	}
 
 	if s.fullyLoaded {
-		s.logf("%T is already fully loaded but did not find %s in cacheMap", s, guid)
+		logger.Debugf("%T is already fully loaded but did not find %s in cacheMap", s, guid)
 		item := cfclient.Buildpack{}
 		return item, NewNotFoundError(item, "guid", guid)
 	}
 
-	s.logf("Did not find cached %T and %T is not fully loaded, querying by guid: %s", cfclient.Buildpack{}, s, guid)
+	logger.Debugf("Did not find cached %T and %T is not fully loaded, querying by guid: %s", cfclient.Buildpack{}, s, guid)
 	i, err := s.client.GetBuildpackByGuid(guid)
 	if err != nil {
 		return cfclient.Buildpack{}, nil
 	}
 
-	s.logf("Saving off a single %T to the cacheMap with guid: %s", i, i.Guid)
+	logger.Debugf("Saving off a single %T to the cacheMap with guid: %s", i, i.Guid)
 	s.cacheMap[i.Guid] = i
 	return i, nil
 }

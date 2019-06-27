@@ -3,6 +3,9 @@
 set -euo pipefail
 
 FILE=$1
+# Add fmt to imports
+sed -i.bak 's|\(import (\)|\1\
+'$'\t"fmt"|g' $FILE
 # Replace the c.Client.GetStackByGuid call
 sed -i.bak 's/\('$'\t''*\)\(.*\)s.client.GetStackByGuid\(.*\)/\1s.unlock()\
 \1\2s.getStackByGuid\3/g' $FILE

@@ -20,7 +20,7 @@ var _ = Describe("Inquisitor", func() {
 	BeforeEach(func() {
 		storage = GetStorage()
 		fakeClient = GetFakeClient(storage)
-		inquisitor = NewInquisitor(fakeClient, GinkgoWriter)
+		inquisitor = NewInquisitor(fakeClient)
 	})
 
 	It("Should get all apps", func() {
