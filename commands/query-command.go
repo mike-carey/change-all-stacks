@@ -2,6 +2,7 @@ package commands
 
 import (
 	"os"
+	"fmt"
 	"bytes"
 
 	"github.com/mike-carey/change-all-stacks/data"
@@ -35,9 +36,14 @@ type AppsWithStackCommand struct {
 	} `positional-args:"true" required:"true"`
 }
 
+type AppBuildpacksCommand struct {
+	queryCommand
+}
+
 type QueryCommand struct {
 	AppsWithBuildpackCommand `command:"apps-with-buildpack"`
 	AppsWithStackCommand `command:"apps-with-stack"`
+	AppBuildpacksCommand `command:"app-buildpacks"`
 }
 
 func (c *AppsWithBuildpackCommand) Execute(args []string) error {
@@ -130,5 +136,41 @@ func (c *AppsWithStackCommand) Execute(args []string) error {
 	return nil
 }
 
+func (c *AppBuildpacksCommand) Execute(args []string) error {
+	logger.Debug("Getting QueryServices")
+
+	qs, err := manager.QueryServices()
+	if err != nil {
+		return err
+	}
+
+	buff := bytes.NewBuffer(nil)
+
+	for foundationName, q := range qs {
+		apps, err := q.GetAllAppsWithinOrgs()
+		if err != nil {
+			return err
+		}
+
+		logger.Debug("Got all apps from queryService")
+
+		buff.WriteString(fmt.Sprintf("Foundation: %s\n", foundationName))
+		bs, err := q.GetBuildpackSet(apps)
+		if err != nil {
+			return err
+		}
+
+		for _, b := range bs {
+			buff.WriteString(fmt.Sprintf("  - %s\n", b))
+		}
+		buff.WriteString(fmt.Sprintf("\n"))
+	}
+
+	buff.WriteTo(os.Stdout)
+
+	return nil
+}
+
 var _ Command = &AppsWithStackCommand{}
 var _ Command = &AppsWithBuildpackCommand{}
+var _ Command = &AppBuildpacksCommand{}
