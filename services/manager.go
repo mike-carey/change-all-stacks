@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/mike-carey/change-all-stacks/config"
-	"github.com/mike-carey/change-all-stacks/data"
 	"github.com/mike-carey/change-all-stacks/logger"
 
 	cfclient "github.com/cloudfoundry-community/go-cfclient"
@@ -22,7 +21,6 @@ type Manager interface {
 	QueryServices() (map[string]QueryService, error)
 	// RunnerServices() (map[string]RunnerService, error)
 	GetOptions() ManagerOptions
-	GetFormatter() data.Formatter
 }
 
 type manager struct {
@@ -41,7 +39,6 @@ func NewManager(opts *ManagerOptions) (Manager, error) {
 	// Create singletons
 	logger.Debug("Creating singletons")
 	inqServ := NewInquisitorService()
-	logger.Debugf("%q", inqServ)
 
 	return &manager{
 		options: opts,
@@ -94,8 +91,4 @@ func (m *manager) QueryServices() (map[string]QueryService, error) {
 	}
 
 	return pool, nil
-}
-
-func (m *manager) GetFormatter() data.Formatter {
-	return data.NewDefaultFormatter()
 }

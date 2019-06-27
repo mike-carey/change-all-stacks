@@ -1,18 +1,35 @@
 package commands
 
 import (
-	"bytes"
 	"os"
+	"bytes"
+
+	"github.com/mike-carey/change-all-stacks/data"
 	"github.com/mike-carey/change-all-stacks/logger"
 )
 
+type queryCommand struct {
+	Format string `short:"F" long:"format" description:"The format to output" choice:"csv" choice:"" default:""`
+}
+
+func (c *queryCommand) GetFormatter() data.Formatter {
+	switch c.Format {
+	case "csv":
+		return data.NewCsvFormatter()
+	default:
+		return data.NewDefaultFormatter()
+	}
+}
+
 type AppsWithBuildpackCommand struct {
+	queryCommand
 	Args struct {
 	 	BuildpackName string
 	} `positional-args:"true" required:"true"`
 }
 
 type AppsWithStackCommand struct {
+	queryCommand
 	Args struct {
 		StackName string
 	} `positional-args:"true" required:"true"`
@@ -33,7 +50,7 @@ func (c *AppsWithBuildpackCommand) Execute(args []string) error {
 	}
 
 	mOpts := manager.GetOptions()
-	formatter := manager.GetFormatter()
+	formatter := c.GetFormatter()
 	buff := bytes.NewBuffer(nil)
 
 	for foundationName, q := range qs {
@@ -78,7 +95,7 @@ func (c *AppsWithStackCommand) Execute(args []string) error {
 	}
 
 	mOpts := manager.GetOptions()
-	formatter := manager.GetFormatter()
+	formatter := c.GetFormatter()
 	buff := bytes.NewBuffer(nil)
 
 	for foundationName, q := range qs {
@@ -88,8 +105,6 @@ func (c *AppsWithStackCommand) Execute(args []string) error {
 		}
 
 		logger.Debug("Got all apps from queryService")
-
-		logger.Debugf("%v", c)
 
 		logger.Debugf("Filtering apps by stack: %s", opts.Args.StackName)
 		apps, err = q.FilterAppsByStackName(apps, opts.Args.StackName)

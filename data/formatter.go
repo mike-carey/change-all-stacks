@@ -7,6 +7,9 @@ import (
 
 const (
 	DefaultFormat = "Foundation: %{foundation}, Org: %{org}, Space: %{space}, App: %{app}, LastUpload: %{latestUpload}, LatestAuthor: %{latestAuthor}"
+
+	CsvHeader = "Foundation, Org, Space, App, LastUpload, LatestAuthor"
+	CsvFormat = "%{foundation}, %{org}, %{space}, %{app}, %{latestUpload}, %{latestAuthor}"
 )
 
 func Tsprintf(format string, params map[string]interface{}) string {
@@ -55,3 +58,23 @@ func (f *formatter) Format(entries Data) (string, error) {
 
 	return strings.Join(strs, "\n"), nil
 }
+
+var _ Formatter = &formatter{}
+
+type csvFormatter struct {}
+
+func NewCsvFormatter() Formatter {
+	return &csvFormatter{}
+}
+
+func (f *csvFormatter) Format(entries Data) (string, error) {
+	strs := make([]string, len(entries)+1)
+	strs[0] = CsvHeader
+	for i, entry := range entries {
+		strs[i+1] = Tsprintf(CsvFormat, TDataMap(entry.Foundation, entry.Org.Name, entry.Space.Name, entry.App.Name, "00/00/00 00:00:00", entry.LatestAuthor.Username))
+	}
+
+	return strings.Join(strs, "\n"), nil
+}
+
+var _ Formatter = &csvFormatter{}
