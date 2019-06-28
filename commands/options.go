@@ -8,6 +8,7 @@ type Options struct {
 	*services.ManagerOptions
 	QueryCommand `command:"query" description:"Queries the cloud controller for information"`
 	ChangeCommand `command:"change" description:"Change the stacks on apps from one stack to another"`
+	ProblemCommand `command:"problem" description:"Finds applications that would cause a problem when attempting to change the stack"`
 }
 
 type InitialOptions struct {

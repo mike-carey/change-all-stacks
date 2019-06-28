@@ -19,6 +19,7 @@ type ManagerOptions struct {
 
 type Manager interface {
 	QueryServices() (map[string]QueryService, error)
+	ProblemServices() (map[string]ProblemService, error)
 	// RunnerServices() (map[string]RunnerService, error)
 	GetOptions() ManagerOptions
 }
@@ -88,6 +89,25 @@ func (m *manager) QueryServices() (map[string]QueryService, error) {
 		}
 
 		pool[foundationName] = NewQueryService(inq)
+	}
+
+	return pool, nil
+}
+
+func (m *manager) ProblemServices() (map[string]ProblemService, error) {
+	confs, err := m.getFoundations()
+	if err != nil {
+		return nil, err
+	}
+
+	pool := make(map[string]ProblemService, len(confs))
+	for foundationName, conf := range confs {
+		inq, err := m.inqServ.GetInquisitor(conf)
+		if err != nil {
+			return nil, err
+		}
+
+		pool[foundationName] = NewProblemService(inq)
 	}
 
 	return pool, nil

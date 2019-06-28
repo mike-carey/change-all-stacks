@@ -19,6 +19,7 @@ end
 
 //go:generate counterfeiter -o fakes/fake_inquisitor.go Inquisitor
 type Inquisitor interface {
+  Client() CFClient
 <% types.each do |type, klass| %>
 	GetAll<%= klass %>s() ([]cfclient.<%= klass %>, error)
 	Get<%= klass %>ByGuid(<%= type %>Guid string) (cfclient.<%= klass %>, error)
@@ -40,6 +41,10 @@ func NewInquisitor(client CFClient) Inquisitor {
 		<%= type %>Service: New<%= klass %>Service(client),
 <% end %>
 	}
+}
+
+func (i *inquisitor) Client() CFClient {
+	return i.client
 }
 
 <% types.each do |type, klass| %>

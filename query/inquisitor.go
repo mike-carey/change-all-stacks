@@ -6,6 +6,8 @@ import (
 
 //go:generate counterfeiter -o fakes/fake_inquisitor.go Inquisitor
 type Inquisitor interface {
+	Client() CFClient
+
 	GetAllApps() ([]cfclient.App, error)
 	GetAppByGuid(appGuid string) (cfclient.App, error)
 	GetAppByName(appName string) (cfclient.App, error)
@@ -55,6 +57,10 @@ func NewInquisitor(client CFClient) Inquisitor {
 
 		buildpackService: NewBuildpackService(client),
 	}
+}
+
+func (i *inquisitor) Client() CFClient {
+	return i.client
 }
 
 func (i *inquisitor) getAppService() *AppService {

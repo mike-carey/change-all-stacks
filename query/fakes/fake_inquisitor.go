@@ -9,6 +9,16 @@ import (
 )
 
 type FakeInquisitor struct {
+	ClientStub        func() query.CFClient
+	clientMutex       sync.RWMutex
+	clientArgsForCall []struct {
+	}
+	clientReturns struct {
+		result1 query.CFClient
+	}
+	clientReturnsOnCall map[int]struct {
+		result1 query.CFClient
+	}
 	GetAllAppsStub        func() ([]cfclient.App, error)
 	getAllAppsMutex       sync.RWMutex
 	getAllAppsArgsForCall []struct {
@@ -201,6 +211,58 @@ type FakeInquisitor struct {
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
+}
+
+func (fake *FakeInquisitor) Client() query.CFClient {
+	fake.clientMutex.Lock()
+	ret, specificReturn := fake.clientReturnsOnCall[len(fake.clientArgsForCall)]
+	fake.clientArgsForCall = append(fake.clientArgsForCall, struct {
+	}{})
+	fake.recordInvocation("Client", []interface{}{})
+	fake.clientMutex.Unlock()
+	if fake.ClientStub != nil {
+		return fake.ClientStub()
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	fakeReturns := fake.clientReturns
+	return fakeReturns.result1
+}
+
+func (fake *FakeInquisitor) ClientCallCount() int {
+	fake.clientMutex.RLock()
+	defer fake.clientMutex.RUnlock()
+	return len(fake.clientArgsForCall)
+}
+
+func (fake *FakeInquisitor) ClientCalls(stub func() query.CFClient) {
+	fake.clientMutex.Lock()
+	defer fake.clientMutex.Unlock()
+	fake.ClientStub = stub
+}
+
+func (fake *FakeInquisitor) ClientReturns(result1 query.CFClient) {
+	fake.clientMutex.Lock()
+	defer fake.clientMutex.Unlock()
+	fake.ClientStub = nil
+	fake.clientReturns = struct {
+		result1 query.CFClient
+	}{result1}
+}
+
+func (fake *FakeInquisitor) ClientReturnsOnCall(i int, result1 query.CFClient) {
+	fake.clientMutex.Lock()
+	defer fake.clientMutex.Unlock()
+	fake.ClientStub = nil
+	if fake.clientReturnsOnCall == nil {
+		fake.clientReturnsOnCall = make(map[int]struct {
+			result1 query.CFClient
+		})
+	}
+	fake.clientReturnsOnCall[i] = struct {
+		result1 query.CFClient
+	}{result1}
 }
 
 func (fake *FakeInquisitor) GetAllApps() ([]cfclient.App, error) {
@@ -1111,6 +1173,8 @@ func (fake *FakeInquisitor) GetStackByNameReturnsOnCall(i int, result1 cfclient.
 func (fake *FakeInquisitor) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
+	fake.clientMutex.RLock()
+	defer fake.clientMutex.RUnlock()
 	fake.getAllAppsMutex.RLock()
 	defer fake.getAllAppsMutex.RUnlock()
 	fake.getAllBuildpacksMutex.RLock()
