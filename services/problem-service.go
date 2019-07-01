@@ -85,6 +85,7 @@ func (s *problemService) getBuildpackForApp(app cfclient.App, fromStack string, 
 				}
 
 				if b.Stack == toStack {
+					logger.Debugf("The buildpack is using the newer stack(%s)", fromStack)
 					return &b, app.Buildpack, nil
 				}
 			}
@@ -109,7 +110,7 @@ func (s *problemService) getBuildpackForApp(app cfclient.App, fromStack string, 
 				}
 
 				if b.Name == buildpack.Name && b.Stack == toStack {
-					logger.Debugf("Found a %s buildpack with %s", buildpack.Name, toStack)
+					logger.Debugf("Found a %s buildpack with stack(%s)", buildpack.Name, toStack)
 					return &buildpack, buildpack.Name, nil
 				}
 			}
