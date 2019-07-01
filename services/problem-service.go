@@ -77,8 +77,16 @@ func (s *problemService) getBuildpackForApp(app cfclient.App, fromStack string, 
 		logger.Debugf("App(%s) explicitly specified a buildpack(%s)", app.Name, app.Buildpack)
 
 		for _, b := range bps {
-			if b.Name == app.Buildpack && b.Stack != fromStack {
-				return &b, app.Buildpack, nil
+			if b.Name == app.Buildpack {
+				logger.Debugf("Found the explicit buildpack(%s)", app.Buildpack)
+				if b.Stack == fromStack {
+					logger.Debugf("The buildpack is using the older stack(%s)", fromStack)
+					continue
+				}
+
+				if b.Stack == toStack {
+					return &b, app.Buildpack, nil
+				}
 			}
 		}
 
@@ -106,7 +114,7 @@ func (s *problemService) getBuildpackForApp(app cfclient.App, fromStack string, 
 				}
 			}
 
-			return nil, "", nil
+			return nil, buildpack.Name, nil
 		}
 
 		return &buildpack, buildpack.Name, nil
@@ -122,8 +130,10 @@ func (s *problemService) getBuildpackForApp(app cfclient.App, fromStack string, 
 					continue
 				}
 
-				buildpack = b
-				break
+				if b.Stack == toStack {
+					buildpack = b
+					break
+				}
 			}
 		}
 
