@@ -1,7 +1,9 @@
 package commands
 
 import (
+	"os"
 	"fmt"
+	"bytes"
 )
 
 type ProblemCommand struct {}
@@ -18,6 +20,7 @@ func (c *ProblemCommand) Execute([]string) error {
 	}
 
 	mOpts := manager.GetOptions()
+	buff := bytes.NewBuffer(nil)
 
 	for foundationName, qs := range qss {
 		apps, err := qs.GetAllAppsWithinOrgs(mOpts.Orgs...)
@@ -25,7 +28,7 @@ func (c *ProblemCommand) Execute([]string) error {
 			return err
 		}
 
-		fmt.Printf("Foundation: %s", foundationName)
+		buff.WriteString(fmt.Sprintf("Foundation: %s\n", foundationName))
 
 		ps := pss[foundationName]
 		problems, err := ps.FindProblems(apps)
@@ -34,9 +37,11 @@ func (c *ProblemCommand) Execute([]string) error {
 		}
 
 		for _, p := range problems {
-			fmt.Printf("- %s", p.GetReason())
+			buff.WriteString(fmt.Sprintf("- %s\n", p.GetReason()))
 		}
 	}
+
+	buff.WriteTo(os.Stdout)
 
 	return nil
 }
