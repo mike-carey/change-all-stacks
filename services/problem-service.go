@@ -167,6 +167,12 @@ func (s *problemService) GetCurrentDroplet(app cfclient.App) (string, error) {
 	req := c.NewRequest("GET", fmt.Sprintf("/v3/apps/%s/relationships/current_droplet", app.Guid))
 	resp, err := c.DoRequest(req)
 	if err != nil {
+		if e, ok := err.(cfclient.CloudFoundryError); ok {
+			if e.Code == DropletNotFoundCode {
+				return "", nil
+			}
+		}
+
 		return "", errors.Wrap(err, "Error requesting current_droplet")
 	}
 	defer resp.Body.Close()
