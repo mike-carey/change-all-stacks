@@ -26,6 +26,8 @@ const (
 	JavaBuildpackOffline = "java_buildpack_offline"
 	DotnetCoreBuildpack = "dotnet_core_buildpack"
 	DotnetCoreBuildpackOldVersion = "dotnet_core_buildpack_old_version"
+
+	DropletNotFoundJson = `{"errors": [{"code": 10010, "title": "CFDropletNotFound", "Detail": "Could not find droplet"}]}`
 )
 
 var _ = Describe("ProblemService", func() {
@@ -174,6 +176,32 @@ var _ = Describe("ProblemService", func() {
 
 		req := &cfclient.Request{}
 		res := makeResponse(`{"data": {"guid": "droplet-guid"}}`)
+
+		fakeClient.NewRequestReturns(req)
+		fakeClient.DoRequestReturns(res, nil)
+
+		pbs, err := problemService.FindProblems(apps, CFLinuxFS2, CFLinuxFS3)
+
+		Expect(err).To(BeNil())
+		Expect(pbs).NotTo(BeEmpty())
+		Expect(pbs).To(HaveLen(1))
+		Expect(pbs[0].App).To(Equal(app))
+		Expect(pbs[0].Reason.GetReason(app)).To(Equal(expectedReason))
+		Expect(pbs[0].GetReason()).To(Equal(expectedReason))
+	})
+
+	It("current_droplet does not exist", func () {
+		app := cfclient.App{
+			Guid: "app",
+			Name: "app",
+			Buildpack: JavaBuildpack,
+		}
+		apps := []cfclient.App{app,}
+
+		expectedReason := data.MissingDroplet().GetReason(app)
+
+		req := &cfclient.Request{}
+		res := makeResponse(DropletNotFoundJson)
 
 		fakeClient.NewRequestReturns(req)
 		fakeClient.DoRequestReturns(res, nil)
