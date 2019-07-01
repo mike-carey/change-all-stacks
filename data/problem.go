@@ -44,7 +44,3 @@ func (p *ProblemData) GetReason() string {
 }
 
 type ProblemSet []ProblemData
-
-func (s ProblemSet) Add(d ProblemData) {
-	s = append(s, d)
-}

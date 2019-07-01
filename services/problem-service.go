@@ -44,7 +44,7 @@ func (s *problemService) FindProblems(apps []cfclient.App, fromStack string, toS
 		}
 
 		if bp == nil {
-			set.Add(data.ProblemData{
+			set = append(set, data.ProblemData{
 				App: app,
 				Reason: data.InvalidBuildpack(bs),
 			})
@@ -57,7 +57,7 @@ func (s *problemService) FindProblems(apps []cfclient.App, fromStack string, toS
 		}
 
 		if droplet == "" {
-			set.Add(data.ProblemData{
+			set = append(set, data.ProblemData{
 				App: app,
 				Reason: data.MissingDroplet(),
 			})
@@ -91,6 +91,7 @@ func (s *problemService) getBuildpackForApp(app cfclient.App, fromStack string, 
 			}
 		}
 
+		logger.Debugf("Did not find the proper buildpack(%s) with stack(%s) for app(%s)", app.Buildpack, toStack, app.Name)
 		return nil, app.Buildpack, nil
 	}
 
@@ -102,7 +103,7 @@ func (s *problemService) getBuildpackForApp(app cfclient.App, fromStack string, 
 		}
 
 		if buildpack.Stack == fromStack {
-			logger.Debugf("App(%s)'s buildpack(%s) is using %s, checking if there is %s version of the buildpack'", app.Name, buildpack.Name, fromStack, toStack)
+			logger.Debugf("App(%s)'s buildpack(%s) is using %s, checking if there is %s version of the buildpack", app.Name, buildpack.Name, fromStack, toStack)
 
 			for _, b := range bps {
 				if b.Guid == buildpack.Guid {
