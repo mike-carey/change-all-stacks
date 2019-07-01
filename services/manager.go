@@ -60,7 +60,7 @@ func (m *manager) getFoundations() (map[string]*cfclient.Config, error) {
 
 	configs := make(map[string]*cfclient.Config, len(m.configs))
 	for _, foundationName := range m.options.Foundations {
-		if _, ok := m.configs[foundationName]; ok {
+		if _, ok := m.configs[foundationName]; !ok {
 			return nil, fmt.Errorf("Could not find config with name '%s'", foundationName)
 		}
 
