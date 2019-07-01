@@ -6,7 +6,13 @@ import (
 	"bytes"
 )
 
-type ProblemCommand struct {}
+type ProblemCommand struct {
+	Stacks struct {
+		From string
+		To string
+	} `positional-args:"yes" required:"yes"`
+
+}
 
 func (c *ProblemCommand) Execute([]string) error {
 	pss, err := manager.ProblemServices()
@@ -31,7 +37,7 @@ func (c *ProblemCommand) Execute([]string) error {
 		buff.WriteString(fmt.Sprintf("Foundation: %s\n", foundationName))
 
 		ps := pss[foundationName]
-		problems, err := ps.FindProblems(apps)
+		problems, err := ps.FindProblems(apps, c.Stacks.From, c.Stacks.To)
 		if err != nil {
 			return err
 		}

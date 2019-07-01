@@ -15,15 +15,12 @@ import (
 )
 
 const (
-	CFLinuxFS2 = "cflinuxfs2"
-	CFLinuxFS3 = "cflinuxfs3"
-
 	DropletNotFoundCode = 10010
 )
 
 //go:generate counterfeiter -o fakes/fake_problem_service.go ProblemService
 type ProblemService interface {
-	FindProblems(apps []cfclient.App) (data.ProblemSet, error)
+	FindProblems(apps []cfclient.App, fromStack string, toStack string) (data.ProblemSet, error)
 }
 
 func NewProblemService(inquisitor query.Inquisitor) ProblemService {
@@ -36,12 +33,12 @@ type problemService struct {
 	inquisitor query.Inquisitor
 }
 
-func (s *problemService) FindProblems(apps []cfclient.App) (data.ProblemSet, error) {
+func (s *problemService) FindProblems(apps []cfclient.App, fromStack string, toStack string) (data.ProblemSet, error) {
 	set := make(data.ProblemSet, 0)
 
 	for _, app := range apps {
 		// Check that buildpack it has is valid
-		bp, bs, err := s.getBuildpackForApp(app)
+		bp, bs, err := s.getBuildpackForApp(app, fromStack, toStack)
 		if err != nil {
 			return nil, err
 		}
@@ -70,7 +67,7 @@ func (s *problemService) FindProblems(apps []cfclient.App) (data.ProblemSet, err
 	return set, nil
 }
 
-func (s *problemService) getBuildpackForApp(app cfclient.App) (*cfclient.Buildpack, string, error) {
+func (s *problemService) getBuildpackForApp(app cfclient.App, fromStack string, toStack string) (*cfclient.Buildpack, string, error) {
 	bps, err := s.inquisitor.GetAllBuildpacks()
 	if err != nil {
 		return nil, "", err
@@ -80,7 +77,7 @@ func (s *problemService) getBuildpackForApp(app cfclient.App) (*cfclient.Buildpa
 		logger.Debugf("App(%s) explicitly specified a buildpack(%s)", app.Name, app.Buildpack)
 
 		for _, b := range bps {
-			if b.Name == app.Buildpack && b.Stack != CFLinuxFS2 {
+			if b.Name == app.Buildpack && b.Stack != fromStack {
 				return &b, app.Buildpack, nil
 			}
 		}
@@ -95,16 +92,16 @@ func (s *problemService) getBuildpackForApp(app cfclient.App) (*cfclient.Buildpa
 			return nil, "", err
 		}
 
-		if buildpack.Stack == CFLinuxFS2 {
-			logger.Debugf("App(%s)'s buildpack(%s) is using cflinuxfs2, checking if there is cflinuxfs3 version of the buildpack'", app.Name, buildpack.Name)
+		if buildpack.Stack == fromStack {
+			logger.Debugf("App(%s)'s buildpack(%s) is using %s, checking if there is %s version of the buildpack'", app.Name, buildpack.Name, fromStack, toStack)
 
 			for _, b := range bps {
 				if b.Guid == buildpack.Guid {
 					continue
 				}
 
-				if b.Name == buildpack.Name && b.Stack == CFLinuxFS3 {
-					logger.Debugf("Found a %s buildpack with cflinuxfs3", buildpack.Name)
+				if b.Name == buildpack.Name && b.Stack == toStack {
+					logger.Debugf("Found a %s buildpack with %s", buildpack.Name, toStack)
 					return &buildpack, buildpack.Name, nil
 				}
 			}
@@ -120,8 +117,8 @@ func (s *problemService) getBuildpackForApp(app cfclient.App) (*cfclient.Buildpa
 		var buildpack cfclient.Buildpack
 		for _, b := range bps {
 			if app.DetectedBuildpack == b.Name {
-				if b.Stack == CFLinuxFS2 {
-					logger.Debugf("Found the detected buildpack, but it is cflinuxfs2")
+				if b.Stack == fromStack {
+					logger.Debugf("Found the detected buildpack, but it is %s", fromStack)
 					continue
 				}
 
