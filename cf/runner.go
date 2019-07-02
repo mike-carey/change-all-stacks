@@ -2,6 +2,7 @@ package cf
 
 import (
 	"fmt"
+	"bytes"
 	"github.com/mike-carey/change-all-stacks/logger"
 	"github.com/cloudfoundry-community/go-cfclient"
 )
@@ -9,7 +10,7 @@ import (
 //go:generate counterfeiter -o fakes/fake_runner.go Runner
 type Runner interface {
 	Setup(c *cfclient.Config, pluginPath string, org string, space string) error
-	Run(appName string, stackName string) error
+	Run(appName string, stackName string) (*bytes.Buffer, error)
 }
 
 type runner struct {
@@ -62,18 +63,18 @@ func (r *runner) Setup(c *cfclient.Config, pluginPath string, org string, space 
 
 }
 
-func (r *runner) Run(appName string, stackName string) error {
+func (r *runner) Run(appName string, stackName string) (*bytes.Buffer, error) {
 	if !r.isSetup {
-		return fmt.Errorf("Runner is not setup!")
+		return nil, fmt.Errorf("Runner is not setup!")
 	}
 
 	logger.Debugf("Changing %s's stack to %s", appName, stackName)
 	err := r.executor.ChangeStack(appName, stackName)
 	if err != nil {
 		logger.Debugf("Failed to change %s's stack to %s.  Reason: %v", err)
-		return err
+		return nil, err
 	}
 
-	logger.Debugf("Successfully changed %s's stack to %s")
-	return nil
+	logger.Debugf("Successfully changed %s's stack to %s", appName, stackName)
+	return r.executor.Buffer(), nil
 }

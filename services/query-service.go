@@ -15,6 +15,7 @@ type QueryService interface {
 	FilterAppsByBuildpackName(apps []cfclient.App, buildpackName string) ([]cfclient.App, error)
 	GetAppData(foundationName string, apps []cfclient.App) (data.Data, error)
 	GetBuildpackSet(apps []cfclient.App) ([]string, error)
+	GroupAppsByOrgAndSpace(apps []cfclient.App) (map[string]map[string][]cfclient.App, error)
 }
 
 func NewQueryService(inquisitor query.Inquisitor) QueryService {
@@ -185,6 +186,37 @@ func (s *queryService) GetBuildpackSet(apps []cfclient.App) ([]string, error) {
 	}
 
 	return bs, nil
+}
+
+func (s *queryService) GroupAppsByOrgAndSpace(apps []cfclient.App) (map[string]map[string][]cfclient.App, error) {
+	pool := make(map[string]map[string][]cfclient.App, 0)
+
+	for _, app := range apps {
+		space, err := s.inquisitor.GetSpaceByGuid(app.SpaceGuid)
+		if err != nil {
+			return nil, err
+		}
+
+		org, err := s.inquisitor.GetOrgByGuid(space.OrganizationGuid)
+		if err != nil {
+			return nil, err
+		}
+
+		o := org.Name
+		s := space.Name
+
+		if _, ok := pool[o]; !ok {
+			pool[o] = make(map[string][]cfclient.App, 0)
+		}
+
+		if _, ok := pool[o][s]; !ok {
+			pool[o][s] = make([]cfclient.App, 0)
+		}
+
+		pool[o][s] = append(pool[o][s], app)
+	}
+
+	return pool, nil
 }
 
 var _ QueryService = &queryService{}

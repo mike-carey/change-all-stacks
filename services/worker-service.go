@@ -87,9 +87,12 @@ func (i *workerService) GetWorker(config *cfclient.Config, orgName string, space
 	i.lock()
 	defer i.unlock()
 
+	logger.Debugf("workerService=%v", i)
+
 	if !i.instances.EnsureAt(config, orgName).Has(spaceName) {
 		// Create a runner
 		executor := i.executorService.CreateExecutorWithDefaultCommand(dryRun)
+		logger.Debugf("%v", executor)
 		runner := i.runnerService.GetRunner(executor)
 		worker := cf.NewWorker(runner, config, i.pluginPath, orgName, spaceName)
 

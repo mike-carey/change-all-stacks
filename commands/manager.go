@@ -19,19 +19,19 @@ func GetManager() services.Manager {
 func TranslateManagerOptions(mOpts *ManagerOptions) *services.ManagerOptions {
 	return &services.ManagerOptions{
 		Config: mOpts.Config,
-		DryRun: mOpts.DryRun,
-		Threads: mOpts.Threads,
+		// DryRun: mOpts.DryRun,
+		// Threads: mOpts.Threads,
 		Foundations: mOpts.Foundations,
 		Orgs: mOpts.Orgs,
+		PluginPath: mOpts.PluginPath,
 	}
 }
 
 type ManagerOptions struct {
 	Config  string `short:"c" long:"config" description:"The configuration file to load" default:"cf.json"`
-	DryRun  bool   `short:"d" long:"dry-run" description:"Does not actually do the stack change, but instead prints what it would do"`
-	Threads int `short:"t" long:"threads" description:"The number of threads to run" default:"10"`
 	Foundations []string `short:"f" long:"foundation" description:"Limit the foundations that are targeted from the config file"`
 	Orgs []string `short:"o" long:"org" description:"Limit the orgs that are targeted from the foundations"`
+	PluginPath  string `short:"p" long:"plugin-path" description:"The path to the stack-auditor plugin"`
 }
 
 func getDefaultManagerOptions() *ManagerOptions {

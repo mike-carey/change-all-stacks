@@ -15,22 +15,37 @@ type ManagerOptions struct {
 	Threads int
 	Foundations []string
 	Orgs []string
+	PluginPath string
 }
 
 type Manager interface {
 	QueryServices() (map[string]QueryService, error)
 	ProblemServices() (map[string]ProblemService, error)
-	// RunnerServices() (map[string]RunnerService, error)
+	WorkerService() (WorkerService, error)
 	GetOptions() ManagerOptions
+	GetConfigs() config.Configs
 }
 
 type manager struct {
 	options *ManagerOptions
 	configs config.Configs
 	inqServ InquisitorService
+	excServ ExecutorService
+	runServ RunnerService
 }
 
-func NewManager(opts *ManagerOptions) (Manager, error) {
+func NewManager(opts *ManagerOptions, conf config.Configs, inqServ InquisitorService, excServ ExecutorService, runServ RunnerService) (Manager, error) {
+	return &manager{
+		options: opts,
+		configs: conf,
+		inqServ: inqServ,
+		excServ: excServ,
+		runServ: runServ,
+	}, nil
+
+}
+
+func NewDefaultManager(opts *ManagerOptions) (Manager, error) {
 	// Grab our configurations
 	configs, err := config.LoadConfigFromFile(opts.Config)
 	if err != nil {
@@ -40,12 +55,10 @@ func NewManager(opts *ManagerOptions) (Manager, error) {
 	// Create singletons
 	logger.Debug("Creating singletons")
 	inqServ := NewInquisitorService()
+	excServ := NewExecutorService()
+	runServ := NewRunnerService()
 
-	return &manager{
-		options: opts,
-		configs: configs,
-		inqServ: inqServ,
-	}, nil
+	return NewManager(opts, configs, inqServ, excServ, runServ)
 }
 
 func remove(s []string, i int) []string {
@@ -73,6 +86,10 @@ func (m *manager) getFoundations() (map[string]*cfclient.Config, error) {
 func (m *manager) GetOptions() ManagerOptions {
 	opts := m.options
 	return *opts
+}
+
+func (m *manager) GetConfigs() config.Configs {
+	return m.configs
 }
 
 func (m *manager) QueryServices() (map[string]QueryService, error) {
@@ -111,4 +128,8 @@ func (m *manager) ProblemServices() (map[string]ProblemService, error) {
 	}
 
 	return pool, nil
+}
+
+func (m *manager) WorkerService() (WorkerService, error) {
+	return NewWorkerService(m.excServ, m.runServ, m.options.PluginPath), nil
 }

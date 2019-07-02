@@ -11,6 +11,10 @@ type RunnerService interface {
 
 type runnerService struct {}
 
+func NewRunnerService() RunnerService {
+	return &runnerService{}
+}
+
 func (s *runnerService) GetRunner(executor cf.Executor) cf.Runner {
 	return cf.NewRunner(executor)
 }

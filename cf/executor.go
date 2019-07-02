@@ -2,6 +2,7 @@ package cf
 
 import (
 	"fmt"
+	"bytes"
 	"strings"
 
 	"github.com/mike-carey/change-all-stacks/logger"
@@ -28,26 +29,32 @@ type Executor interface {
 	Target(org string, space string) error
 	InstallPlugin(plugin string) error
 	ChangeStack(app string, stack string) error
+	Buffer() *bytes.Buffer
 }
 
 func NewExecutorWithDefaultCommand(dryrun bool) Executor {
 	home := NewTempCFHome("")
+	cmd := NewDefaultCFCommand(home)
 
-	return NewExecutor(NewDefaultCFCommand(home), dryrun)
+	return NewExecutor(cmd, dryrun)
 }
 
 func NewExecutor(command CFCommand, dryrun bool) Executor {
 	return &executor{
 		command: command,
 		dryrun: dryrun,
+		buffer: bytes.NewBuffer(nil),
 	}
 }
 
 type executor struct {
-	Name string
-	home CFHome
 	command CFCommand
 	dryrun bool
+	buffer *bytes.Buffer
+}
+
+func (r *executor) Buffer() *bytes.Buffer {
+	return r.buffer
 }
 
 func (r *executor) run(args ...interface{}) error {
@@ -70,7 +77,7 @@ func (r *executor) run(args ...interface{}) error {
 	if r.dryrun {
 		str, err := r.command.String(printArgs...)
 		if err == nil {
-			fmt.Println(str)
+			r.buffer.WriteString(str + "\n")
 		}
 	} else {
 		logger.Debugf("Running cf command: %s", strings.Join(printArgs, " "))

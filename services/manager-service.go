@@ -12,5 +12,5 @@ func NewManagerService() ManagerService {
 type managerService struct {}
 
 func (s *managerService) CreateManager(opts *ManagerOptions) (Manager, error) {
-	return NewManager(opts)
+	return NewDefaultManager(opts)
 }
