@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 	"bytes"
+	"bufio"
 	"github.com/mike-carey/change-all-stacks/errors"
 	"github.com/mike-carey/change-all-stacks/logger"
 	"github.com/mike-carey/change-all-stacks/services"
@@ -33,6 +34,43 @@ func (c *ChangeCommand) Execute([]string) error {
 		return err
 	}
 
+	if c.Interactive {
+		err = c.execute(qss, workerService, true)
+		if err != nil {
+			return err
+		}
+
+		if !shouldContinue() {
+			fmt.Println("Bailing out!")
+			return nil
+		}
+
+		err = c.execute(qss, workerService, false)
+		return err
+	}
+
+	return c.execute(qss, workerService, c.DryRun)
+}
+
+func shouldContinue() bool {
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		fmt.Fprintf(os.Stderr, "Continue? [Yn]  ")
+		text, _ := reader.ReadString('\n')
+		switch text[0:1] {
+		case "y":
+			return true
+		case "n":
+			return false
+		case "\n":
+			return true
+		default:
+			fmt.Fprintf(os.Stderr, "Unknown option answer: %s", text[0:1])
+		}
+	}
+}
+
+func (c *ChangeCommand) execute(qss map[string]services.QueryService, workerService services.WorkerService, dryrun bool) error {
 	mOpts := manager.GetOptions()
 	confs := manager.GetConfigs()
 
@@ -60,7 +98,7 @@ func (c *ChangeCommand) Execute([]string) error {
 		}
 
 		go func(sem chan int, foundationName string, conf cfclient.Config, groupedApps map[string]map[string][]cfclient.App) {
-			buff, err := c.run(sem, foundationName, conf, workerService, groupedApps, c.Stacks.To, c.DryRun)
+			buff, err := c.run(sem, foundationName, conf, workerService, groupedApps, c.Stacks.To, dryrun)
 			if err != nil {
 				logger.Debugf("%s had an error: %v!", foundationName, err)
 				errCh <- err
@@ -98,7 +136,7 @@ func (c *ChangeCommand) Execute([]string) error {
 }
 
 func (c *ChangeCommand) run(sem chan int, foundationName string, conf cfclient.Config, workerService services.WorkerService, groupedApps map[string]map[string][]cfclient.App, stack string, dryrun bool) (bytes.Buffer, error) {
-	buff := NewAsyncBuffer([]byte(fmt.Sprintf("Foundation: %s\n", foundationName)))
+	buff := NewAsyncBuffer([]byte(fmt.Sprintf("# Foundation: %s\n", foundationName)))
 	errs := NewAsyncErrorPool()
 
 	count := 0
