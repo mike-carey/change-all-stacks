@@ -34,6 +34,11 @@ func (c *ProblemCommand) Execute([]string) error {
 			return err
 		}
 
+		apps, err = qa.FilterAppsByStackName(c.Stacks.From)
+		if err != nil {
+			return err
+		}
+
 		buff.WriteString(fmt.Sprintf("Foundation: %s\n", foundationName))
 
 		ps := pss[foundationName]
