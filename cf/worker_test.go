@@ -1,6 +1,8 @@
 package cf_test
 
 import (
+	"bytes"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -54,7 +56,8 @@ var _ = Describe("Worker", func() {
 	})
 
 	It("Should Setup the suite, and then run on each app", func() {
-		err := worker.Work(apps, stackName)
+		fakeRunner.RunReturns(bytes.NewBuffer(nil), nil)
+		_, err := worker.Work("", apps, stackName)
 
 		i := fakeRunner.Invocations()
 

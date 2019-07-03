@@ -20,7 +20,7 @@ const (
 
 //go:generate counterfeiter -o fakes/fake_problem_service.go ProblemService
 type ProblemService interface {
-	FindProblems(apps []cfclient.App, fromStack string, toStack string) (data.ProblemSet, error)
+	FindProblems(foundationName string, apps []cfclient.App, fromStack string, toStack string) (data.ProblemSet, error)
 }
 
 func NewProblemService(inquisitor query.Inquisitor) ProblemService {
@@ -33,10 +33,20 @@ type problemService struct {
 	inquisitor query.Inquisitor
 }
 
-func (s *problemService) FindProblems(apps []cfclient.App, fromStack string, toStack string) (data.ProblemSet, error) {
+func (s *problemService) FindProblems(foundationName string, apps []cfclient.App, fromStack string, toStack string) (data.ProblemSet, error) {
 	set := make(data.ProblemSet, 0)
 
 	for _, app := range apps {
+		space, err := s.inquisitor.GetSpaceByGuid(app.SpaceGuid)
+		if err != nil {
+			return nil, err
+		}
+
+		org, err := s.inquisitor.GetOrgByGuid(space.OrganizationGuid)
+		if err != nil {
+			return nil, err
+		}
+
 		// Check that buildpack it has is valid
 		bp, bs, err := s.getBuildpackForApp(app, fromStack, toStack)
 		if err != nil {
@@ -44,10 +54,7 @@ func (s *problemService) FindProblems(apps []cfclient.App, fromStack string, toS
 		}
 
 		if bp == nil {
-			set = append(set, data.ProblemData{
-				App: app,
-				Reason: data.InvalidBuildpack(bs),
-			})
+			set = append(set, *data.NewProblemData(foundationName, org, space, app, app.UpdatedAt, cfclient.User{}, data.InvalidBuildpack(bs)))
 		}
 
 		// Check that the current droplet is available
@@ -57,10 +64,7 @@ func (s *problemService) FindProblems(apps []cfclient.App, fromStack string, toS
 		}
 
 		if droplet == "" {
-			set = append(set, data.ProblemData{
-				App: app,
-				Reason: data.MissingDroplet(),
-			})
+			set = append(set, *data.NewProblemData(foundationName, org, space, app, app.UpdatedAt, cfclient.User{}, data.MissingDroplet()))
 		}
 	}
 

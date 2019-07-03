@@ -158,7 +158,7 @@ var _ = Describe("ProblemService", func() {
 		fakeClient.NewRequestReturns(req)
 		fakeClient.DoRequestReturns(res, nil)
 
-		pbs, err := problemService.FindProblems(apps, CFLinuxFS2, CFLinuxFS3)
+		pbs, err := problemService.FindProblems("", apps, CFLinuxFS2, CFLinuxFS3)
 
 		Expect(err).To(BeNil())
 		Expect(pbs).To(BeEmpty())
@@ -180,7 +180,7 @@ var _ = Describe("ProblemService", func() {
 		fakeClient.NewRequestReturns(req)
 		fakeClient.DoRequestReturns(res, nil)
 
-		pbs, err := problemService.FindProblems(apps, CFLinuxFS2, CFLinuxFS3)
+		pbs, err := problemService.FindProblems("", apps, CFLinuxFS2, CFLinuxFS3)
 
 		Expect(err).To(BeNil())
 		Expect(pbs).NotTo(BeEmpty())
@@ -206,7 +206,7 @@ var _ = Describe("ProblemService", func() {
 		fakeClient.NewRequestReturns(req)
 		fakeClient.DoRequestReturns(res, nil)
 
-		pbs, err := problemService.FindProblems(apps, CFLinuxFS2, CFLinuxFS3)
+		pbs, err := problemService.FindProblems("", apps, CFLinuxFS2, CFLinuxFS3)
 
 		Expect(err).To(BeNil())
 		Expect(pbs).NotTo(BeEmpty())

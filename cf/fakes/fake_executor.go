@@ -2,6 +2,7 @@
 package fakes
 
 import (
+	"bytes"
 	"sync"
 
 	"github.com/mike-carey/change-all-stacks/cf"
@@ -31,6 +32,16 @@ type FakeExecutor struct {
 	}
 	authReturnsOnCall map[int]struct {
 		result1 error
+	}
+	BufferStub        func() *bytes.Buffer
+	bufferMutex       sync.RWMutex
+	bufferArgsForCall []struct {
+	}
+	bufferReturns struct {
+		result1 *bytes.Buffer
+	}
+	bufferReturnsOnCall map[int]struct {
+		result1 *bytes.Buffer
 	}
 	ChangeStackStub        func(string, string) error
 	changeStackMutex       sync.RWMutex
@@ -190,6 +201,58 @@ func (fake *FakeExecutor) AuthReturnsOnCall(i int, result1 error) {
 	}
 	fake.authReturnsOnCall[i] = struct {
 		result1 error
+	}{result1}
+}
+
+func (fake *FakeExecutor) Buffer() *bytes.Buffer {
+	fake.bufferMutex.Lock()
+	ret, specificReturn := fake.bufferReturnsOnCall[len(fake.bufferArgsForCall)]
+	fake.bufferArgsForCall = append(fake.bufferArgsForCall, struct {
+	}{})
+	fake.recordInvocation("Buffer", []interface{}{})
+	fake.bufferMutex.Unlock()
+	if fake.BufferStub != nil {
+		return fake.BufferStub()
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	fakeReturns := fake.bufferReturns
+	return fakeReturns.result1
+}
+
+func (fake *FakeExecutor) BufferCallCount() int {
+	fake.bufferMutex.RLock()
+	defer fake.bufferMutex.RUnlock()
+	return len(fake.bufferArgsForCall)
+}
+
+func (fake *FakeExecutor) BufferCalls(stub func() *bytes.Buffer) {
+	fake.bufferMutex.Lock()
+	defer fake.bufferMutex.Unlock()
+	fake.BufferStub = stub
+}
+
+func (fake *FakeExecutor) BufferReturns(result1 *bytes.Buffer) {
+	fake.bufferMutex.Lock()
+	defer fake.bufferMutex.Unlock()
+	fake.BufferStub = nil
+	fake.bufferReturns = struct {
+		result1 *bytes.Buffer
+	}{result1}
+}
+
+func (fake *FakeExecutor) BufferReturnsOnCall(i int, result1 *bytes.Buffer) {
+	fake.bufferMutex.Lock()
+	defer fake.bufferMutex.Unlock()
+	fake.BufferStub = nil
+	if fake.bufferReturnsOnCall == nil {
+		fake.bufferReturnsOnCall = make(map[int]struct {
+			result1 *bytes.Buffer
+		})
+	}
+	fake.bufferReturnsOnCall[i] = struct {
+		result1 *bytes.Buffer
 	}{result1}
 }
 
@@ -382,6 +445,8 @@ func (fake *FakeExecutor) Invocations() map[string][][]interface{} {
 	defer fake.apiMutex.RUnlock()
 	fake.authMutex.RLock()
 	defer fake.authMutex.RUnlock()
+	fake.bufferMutex.RLock()
+	defer fake.bufferMutex.RUnlock()
 	fake.changeStackMutex.RLock()
 	defer fake.changeStackMutex.RUnlock()
 	fake.installPluginMutex.RLock()

@@ -78,7 +78,7 @@ func (c *AppsWithBuildpackCommand) Execute(args []string) error {
 			return err
 		}
 
-		fs, err := formatter.Format(data)
+		fs, err := formatter.FormatData(data)
 		if err != nil {
 			return err
 		}
@@ -123,7 +123,7 @@ func (c *AppsWithStackCommand) Execute(args []string) error {
 			return err
 		}
 
-		fs, err := formatter.Format(data)
+		fs, err := formatter.FormatData(data)
 		if err != nil {
 			return err
 		}

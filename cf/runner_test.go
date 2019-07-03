@@ -76,7 +76,7 @@ var _ = Describe("Runner", func() {
 		Expect(err).To(BeNil())
 		Expect(fakeExecutor.Invocations()).NotTo(HaveKey("ChangeStack"))
 
-		err = runner.Run(appName, stackName)
+		_, err = runner.Run(appName, stackName)
 
 		i := fakeExecutor.Invocations()
 
@@ -89,7 +89,7 @@ var _ = Describe("Runner", func() {
 	})
 
 	It("Should throw an error if not setup and run is called", func() {
-		err := runner.Run(appName, stackName)
+		_, err := runner.Run(appName, stackName)
 
 		Expect(err).NotTo(BeNil())
 	})

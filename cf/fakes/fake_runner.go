@@ -2,6 +2,7 @@
 package fakes
 
 import (
+	"bytes"
 	"sync"
 
 	cfclient "github.com/cloudfoundry-community/go-cfclient"
@@ -9,17 +10,19 @@ import (
 )
 
 type FakeRunner struct {
-	RunStub        func(string, string) error
+	RunStub        func(string, string) (*bytes.Buffer, error)
 	runMutex       sync.RWMutex
 	runArgsForCall []struct {
 		arg1 string
 		arg2 string
 	}
 	runReturns struct {
-		result1 error
+		result1 *bytes.Buffer
+		result2 error
 	}
 	runReturnsOnCall map[int]struct {
-		result1 error
+		result1 *bytes.Buffer
+		result2 error
 	}
 	SetupStub        func(*cfclient.Config, string, string, string) error
 	setupMutex       sync.RWMutex
@@ -39,7 +42,7 @@ type FakeRunner struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeRunner) Run(arg1 string, arg2 string) error {
+func (fake *FakeRunner) Run(arg1 string, arg2 string) (*bytes.Buffer, error) {
 	fake.runMutex.Lock()
 	ret, specificReturn := fake.runReturnsOnCall[len(fake.runArgsForCall)]
 	fake.runArgsForCall = append(fake.runArgsForCall, struct {
@@ -52,10 +55,10 @@ func (fake *FakeRunner) Run(arg1 string, arg2 string) error {
 		return fake.RunStub(arg1, arg2)
 	}
 	if specificReturn {
-		return ret.result1
+		return ret.result1, ret.result2
 	}
 	fakeReturns := fake.runReturns
-	return fakeReturns.result1
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeRunner) RunCallCount() int {
@@ -64,7 +67,7 @@ func (fake *FakeRunner) RunCallCount() int {
 	return len(fake.runArgsForCall)
 }
 
-func (fake *FakeRunner) RunCalls(stub func(string, string) error) {
+func (fake *FakeRunner) RunCalls(stub func(string, string) (*bytes.Buffer, error)) {
 	fake.runMutex.Lock()
 	defer fake.runMutex.Unlock()
 	fake.RunStub = stub
@@ -77,27 +80,30 @@ func (fake *FakeRunner) RunArgsForCall(i int) (string, string) {
 	return argsForCall.arg1, argsForCall.arg2
 }
 
-func (fake *FakeRunner) RunReturns(result1 error) {
+func (fake *FakeRunner) RunReturns(result1 *bytes.Buffer, result2 error) {
 	fake.runMutex.Lock()
 	defer fake.runMutex.Unlock()
 	fake.RunStub = nil
 	fake.runReturns = struct {
-		result1 error
-	}{result1}
+		result1 *bytes.Buffer
+		result2 error
+	}{result1, result2}
 }
 
-func (fake *FakeRunner) RunReturnsOnCall(i int, result1 error) {
+func (fake *FakeRunner) RunReturnsOnCall(i int, result1 *bytes.Buffer, result2 error) {
 	fake.runMutex.Lock()
 	defer fake.runMutex.Unlock()
 	fake.RunStub = nil
 	if fake.runReturnsOnCall == nil {
 		fake.runReturnsOnCall = make(map[int]struct {
-			result1 error
+			result1 *bytes.Buffer
+			result2 error
 		})
 	}
 	fake.runReturnsOnCall[i] = struct {
-		result1 error
-	}{result1}
+		result1 *bytes.Buffer
+		result2 error
+	}{result1, result2}
 }
 
 func (fake *FakeRunner) Setup(arg1 *cfclient.Config, arg2 string, arg3 string, arg4 string) error {

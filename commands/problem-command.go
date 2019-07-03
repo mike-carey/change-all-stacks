@@ -2,16 +2,26 @@ package commands
 
 import (
 	"os"
-	"fmt"
 	"bytes"
+	"github.com/mike-carey/change-all-stacks/data"
 )
 
 type ProblemCommand struct {
+	Format string `short:"F" long:"format" description:"The format to output" choice:"csv" choice:"" default:""`
 	Stacks struct {
 		From string
 		To string
 	} `positional-args:"yes" required:"yes"`
 
+}
+
+func (c *ProblemCommand) GetFormatter() data.Formatter {
+	switch c.Format {
+	case "csv":
+		return data.NewCsvFormatter()
+	default:
+		return data.NewDefaultFormatter()
+	}
 }
 
 func (c *ProblemCommand) Execute([]string) error {
@@ -26,7 +36,8 @@ func (c *ProblemCommand) Execute([]string) error {
 	}
 
 	mOpts := manager.GetOptions()
-	buff := bytes.NewBuffer(nil)
+	formatter := c.GetFormatter()
+	buffer := bytes.NewBuffer(nil)
 
 	for foundationName, qs := range qss {
 		apps, err := qs.GetAllAppsWithinOrgs(mOpts.Orgs...)
@@ -34,25 +45,26 @@ func (c *ProblemCommand) Execute([]string) error {
 			return err
 		}
 
-		apps, err = qa.FilterAppsByStackName(c.Stacks.From)
+		apps, err = qs.FilterAppsByStackName(apps, c.Stacks.From)
 		if err != nil {
 			return err
 		}
-
-		buff.WriteString(fmt.Sprintf("Foundation: %s\n", foundationName))
 
 		ps := pss[foundationName]
-		problems, err := ps.FindProblems(apps, c.Stacks.From, c.Stacks.To)
+		problems, err := ps.FindProblems(foundationName, apps, c.Stacks.From, c.Stacks.To)
 		if err != nil {
 			return err
 		}
 
-		for _, p := range problems {
-			buff.WriteString(fmt.Sprintf("- %s\n", p.GetReason()))
+		s, err := formatter.FormatProblemSet(problems)
+		if err != nil {
+			return err
 		}
+
+		buffer.WriteString(s)
 	}
 
-	buff.WriteTo(os.Stdout)
+	buffer.WriteTo(os.Stdout)
 
 	return nil
 }
